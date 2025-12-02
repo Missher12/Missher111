@@ -1,0 +1,7 @@
+{
+  "name": "WorkPulse",
+  "description": "A comprehensive HR toolkit featuring smart attendance tracking with camera integration and an AI-powered interview assistant.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
