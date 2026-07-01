@@ -214,7 +214,7 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
           onClick={handleClockAction}
           disabled={loading || !isCameraReady || !!error || isCompleted}
           className={`w-full py-4 rounded-2xl font-black text-lg text-white shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group
-            ${isCompleted ? 'bg-green-600 shadow-green-100' : (status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-sky-200')}`}
+            ${isCompleted ? 'bg-[#22A06B] shadow-emerald-100' : 'bg-[#1677FF] hover:bg-[#005CE6] shadow-[#1677FF]/20'}`}
         >
           {loading ? <Clock className="animate-spin" size={24} /> : (
              <>

@@ -415,28 +415,28 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                   </div>
                </div>
             ) : (
-               <div className="bg-gray-50 border border-dashed border-gray-200 p-4 rounded-xl text-center">
-                  <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
+               <div className="bg-gray-50 border border-dashed border-[#E5EEF8] p-4 rounded-xl text-center">
+                  <p className="text-xs text-slate-400 flex items-center justify-center gap-1">
                      <History size={12} /> 暂无最近核销记录
                   </p>
                </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
-               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm text-center">
-                  <p className="text-xs text-gray-400 mb-1">已签到</p>
-                  <p className="text-2xl font-black text-green-600">{queue.length}</p>
+               <div className="bg-white p-3 rounded-xl border border-[#E5EEF8] shadow-sm text-center">
+                  <p className="text-xs text-slate-400 mb-1">已签到</p>
+                  <p className="text-2xl font-black text-[#22A06B] stat-number">{queue.length}</p>
                </div>
-               <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm text-center">
-                  <p className="text-xs text-gray-400 mb-1">待签到</p>
-                  <p className="text-2xl font-black text-orange-500">{pendingList.length}</p>
+               <div className="bg-white p-3 rounded-xl border border-[#E5EEF8] shadow-sm text-center">
+                  <p className="text-xs text-slate-400 mb-1">待签到</p>
+                  <p className="text-2xl font-black text-[#F59E0B] stat-number">{pendingList.length}</p>
                </div>
             </div>
          </div>
       </div>
 
       {/* RIGHT COLUMN: List Management */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden min-h-0">
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-[#E5EEF8] flex flex-col overflow-hidden min-h-0">
          
          {/* Toolbar */}
          <div className="p-4 border-b border-[#E5EEF8] flex flex-col sm:flex-row justify-between gap-4 bg-white shrink-0">
@@ -484,7 +484,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                 ) : (
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                      {displayPending.map(record => (
-                       <div key={record.id} className="bg-white p-4 rounded-xl border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all flex justify-between items-center group">
+                       <div key={record.id} className="bg-white p-4 rounded-xl border border-[#E5EEF8] hover:border-[#1677FF]/40 hover:shadow-xs transition-all flex justify-between items-center group">
                           <div className="flex items-center gap-3 overflow-hidden">
                              <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm group-hover:bg-blue-50 group-hover:text-[#1677FF] transition-colors shrink-0">
                                 {record.name[0]}
@@ -539,7 +539,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                         })();
 
                         return (
-                          <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-100 hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div key={ticket.id} className="bg-white p-4 rounded-xl border border-[#E5EEF8] hover:border-[#1677FF]/30 hover:shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
                              <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0 transition-colors ${
                                    ticket.status === 'CALLED' ? 'bg-rose-50 text-rose-500 border border-rose-100' :
@@ -552,15 +552,15 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                                 <div>
                                    <div className="flex items-center gap-2 flex-wrap">
                                       <h3 className="font-extrabold text-slate-800 text-sm leading-none">{ticket.staffName}</h3>
-                                      <span className="text-[10px] bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded font-mono font-semibold">#{regNumber}</span>
+                                      <span className="text-[10px] bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded font-bold stat-number">#{regNumber}</span>
                                       {statusBadge}
                                    </div>
                                    <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-2 flex-wrap font-semibold">
-                                     <span className="flex items-center gap-0.5"><Clock size={11} /> {new Date(ticket.checkInTime).toLocaleTimeString()}</span>
+                                     <span className="flex items-center gap-0.5 date-number"><Clock size={11} /> {new Date(ticket.checkInTime).toLocaleTimeString()}</span>
                                      <span className="text-gray-200">•</span>
-                                     <span className="font-mono">{displayPhone}</span>
+                                     <span className="phone-number">{displayPhone}</span>
                                      <span className="text-gray-200">•</span>
-                                     <span className="font-black text-[#1677FF] bg-blue-50 px-1.5 py-0.5 rounded text-[10px]">{ticket.ticketNumber}</span>
+                                     <span className="font-bold text-[#1677FF] bg-blue-50 px-1.5 py-0.5 rounded text-[10px] order-number">{ticket.ticketNumber}</span>
                                    </p>
                                 </div>
                              </div>

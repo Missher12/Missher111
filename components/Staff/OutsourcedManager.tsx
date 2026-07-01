@@ -426,31 +426,49 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-          {groups.map(group => (
-            <div 
-              key={group.id}
-              onClick={() => setSelectedGroupId(group.id)}
-              className={`flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all group/item ${
-                selectedGroupId === group.id 
-                  ? 'bg-blue-50 text-[#1677FF] font-bold border border-blue-100/50' 
-                  : 'text-slate-600 hover:bg-slate-50 border border-transparent'
-              }`}
-            >
-              <span className="truncate text-xs font-semibold">{group.name}</span>
-              {selectedGroupId === group.id && (
-                <div className="flex items-center gap-1">
-                   <button onClick={(e) => { e.stopPropagation(); handleEditGroup(group); }} className="p-1 hover:bg-blue-100 rounded text-[#1677FF] transition-colors">
-                      <Edit2 size={11} />
-                   </button>
-                   {group.id !== PENDING_GROUP_ID && (
-                     <button onClick={(e) => { e.stopPropagation(); handleDeleteGroupClick(group.id); }} className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-500 transition-colors">
-                        <Trash2 size={11} />
-                     </button>
-                   )}
+          {groups.map(group => {
+            const memberCount = staffList.filter(s => {
+              if (s.status !== 'ACTIVE') return false;
+              if (group.id === PENDING_GROUP_ID) {
+                return s.roles.length === 0 || s.roles.some(r => r.groupId === PENDING_GROUP_ID);
+              } else {
+                return s.roles.some(r => r.groupId === group.id);
+              }
+            }).length;
+
+            return (
+              <div 
+                key={group.id}
+                onClick={() => setSelectedGroupId(group.id)}
+                className={`flex justify-between items-center p-2.5 rounded-[10px] cursor-pointer transition-all group/item ${
+                  selectedGroupId === group.id 
+                    ? 'bg-blue-50 text-[#1677FF] font-bold border border-blue-100/30' 
+                    : 'text-slate-600 hover:bg-slate-50 border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="truncate text-xs font-bold">{group.name}</span>
+                  <span className={`inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.2 rounded-full font-sans stat-number ${
+                    selectedGroupId === group.id ? 'bg-[#1677FF]/10 text-[#1677FF]' : 'bg-slate-100 text-slate-400 group-hover/item:bg-slate-200/50'
+                  }`}>
+                    {memberCount}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+                {selectedGroupId === group.id && (
+                  <div className="flex items-center gap-1">
+                     <button onClick={(e) => { e.stopPropagation(); handleEditGroup(group); }} className="p-1 hover:bg-blue-100/50 rounded text-[#1677FF] transition-colors">
+                        <Edit2 size={11} />
+                     </button>
+                     {group.id !== PENDING_GROUP_ID && (
+                       <button onClick={(e) => { e.stopPropagation(); handleDeleteGroupClick(group.id); }} className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-[#E5484D] transition-colors">
+                          <Trash2 size={11} />
+                       </button>
+                     )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {groups.length === 0 && (
             <div className="text-center py-8 text-slate-300 text-xs">暂无分组，请新建</div>
           )}

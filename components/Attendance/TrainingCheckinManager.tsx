@@ -150,7 +150,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">已签到人数</p>
                     <div className="p-2.5 bg-green-50 text-green-600 rounded-xl"><UserCheckIcon size={16} /></div>
                  </div>
-                 <h3 className="text-3xl font-black text-slate-800">{dashboardStats.checkInCount}</h3>
+                 <h3 className="text-3xl font-black text-slate-800 stat-number">{dashboardStats.checkInCount}</h3>
                  <p className="text-xs text-slate-500 mt-1 font-semibold">签到率 {dashboardStats.checkInRate}%</p>
               </div>
               
@@ -160,7 +160,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">现场报名</p>
                       <div className="p-2.5 bg-blue-50 text-[#1677FF] rounded-xl"><UserPlus size={16} /></div>
                    </div>
-                   <h3 className="text-3xl font-black text-slate-800">{onSiteRecords.length}</h3>
+                   <h3 className="text-3xl font-black text-slate-800 stat-number">{onSiteRecords.length}</h3>
                    <p className="text-xs text-slate-500 mt-1 font-semibold">今日新增录入</p>
                 </div>
               )}
@@ -171,7 +171,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">总名单人数</p>
                       <div className="p-2 bg-blue-50 text-[#1677FF] rounded-lg"><ClipboardList size={16} /></div>
                    </div>
-                   <h3 className="text-3xl font-black text-slate-800">{registrationList.length}</h3>
+                   <h3 className="text-3xl font-black text-slate-800 stat-number">{registrationList.length}</h3>
                    <p className="text-xs text-slate-500 mt-1 font-semibold">包含所有渠道数据</p>
                 </div>
               )}
@@ -180,7 +180,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">待签到</p>
                     <div className="p-2.5 bg-orange-50 text-orange-600 rounded-xl"><TrendingUp size={16} /></div>
                  </div>
-                 <h3 className="text-3xl font-black text-slate-800">{dashboardStats.totalRegistered - dashboardStats.checkInCount}</h3>
+                 <h3 className="text-3xl font-black text-slate-800 stat-number">{dashboardStats.totalRegistered - dashboardStats.checkInCount}</h3>
                  <p className="text-xs text-slate-500 mt-1 font-semibold">剩余未到场</p>
               </div>
            </div>
