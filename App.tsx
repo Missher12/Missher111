@@ -1,547 +1,636 @@
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Clock, Users, BarChart3, Menu, X, LogOut, Layers, Plane, Megaphone, Briefcase, Award, CalendarRange, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Menu, X, LogOut, Megaphone, Briefcase, Settings, ScanLine, FileText, Home, ClipboardCheck, Play } from 'lucide-react';
 
-import Dashboard from './components/Dashboard';
-import Attendance from './components/Attendance';
-import StaffManager from './components/StaffManager';
-import AttendanceReports from './components/AttendanceReports';
-import Login from './components/Login';
-import IntervieweeDashboard from './components/IntervieweeDashboard';
-import QueueManager from './components/QueueManager';
-// import LeaveManager from './components/LeaveManager'; // Removed
-import AnnouncementManager from './components/AnnouncementManager';
-// import TalentPool from './components/TalentPool'; // Removed standalone
-import StaffScheduleManager from './components/StaffScheduleManager';
+import Dashboard from './components/Dashboard/Dashboard';
+import StaffDashboard from './components/Staff/StaffDashboard'; 
+import AttendanceReports from './components/Attendance/AttendanceReports';
+import Login from './components/Auth/Login';
+import AnnouncementManager from './components/System/AnnouncementManager';
+import OutsourcedManager from './components/Staff/OutsourcedManager';
+import SystemSettings from './components/System/SystemSettings';
+import TrainingCheckinManager from './components/Attendance/TrainingCheckinManager';
+import CheckInSystem from './components/Attendance/CheckInSystem'; 
+import IntervieweeDashboard from './components/Interview/IntervieweeDashboard';
+import { isSameDay, calculateAttendanceStatus } from './utils';
 
-import { AttendanceRecord, AttendanceStatus, Staff, QueueTicket, UserSession, Announcement, Group, ScheduleData, AttendanceConfig } from './types';
+import { 
+  AdminUser,
+  AttendanceRecord, Staff, QueueTicket, UserSession, Announcement, Group, 
+  RegistrationRecord, AttendanceConfig, AttendanceStatus, PermissionSettings, LoginConfig, RegistrationConfig
+} from './types';
 
-// Mock Data
+// Mock Data for Initial Load (Bootstrap - Minimal)
 const MOCK_GROUPS: Group[] = [
-  { id: 'g1', name: '前端开发组', description: '负责Web端与小程序开发' },
-  { id: 'g2', name: '后端开发组', description: '负责服务器与API架构' },
-  { id: 'g3', name: 'UI设计组', description: '负责界面设计与交互体验' },
-  { id: 'g4', name: '市场销售组', description: '负责客户拓展与维护' },
+  { id: 'g_pending_allocation', name: '总人员待分配组', description: '新入职或暂无固定分组的人员中转站' },
+  { id: 'g_service_center', name: '服务中心', description: '核心服务与支持团队' },
+  { id: 'g_out', name: '编外机动组', description: '负责临时性支援任务' },
 ];
 
-const MOCK_STAFF_DATA: Staff[] = [
-  { id: 'u1', name: '李明', idCard: '1001', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', status: 'ACTIVE', roles: [{ groupId: 'g1', groupName: '前端开发组', isLeader: true }], joinDate: '2023-01-15', phone: '13800138001', isTalent: true, talentNotes: '技术骨干，潜力巨大' },
-  { id: 'u2', name: '张伟', idCard: '1002', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka', status: 'ACTIVE', roles: [{ groupId: 'g1', groupName: '前端开发组', isLeader: false }], joinDate: '2023-03-22', phone: '13800138002' },
-  { id: 'u3', name: '王芳', idCard: '1003', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria', status: 'ACTIVE', roles: [{ groupId: 'g4', groupName: '市场销售组', isLeader: true }], joinDate: '2023-06-10', phone: '13800138003' },
-  { id: 'u4', name: '赵强', idCard: '1005', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver', status: 'PENDING', roles: [], joinDate: '2023-10-05' },
-  { id: 'u5', name: '陈红', idCard: '1006', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lily', status: 'PENDING', roles: [], joinDate: '2023-10-06' },
-  { id: 'u6', name: '张三', idCard: '2023', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', status: 'INTERVIEWED', roles: [], joinDate: '2023-10-07' }, // Passed but waiting group
-  { id: 'u7', name: '李四', idCard: '2024', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Max', status: 'REJECTED', roles: [], joinDate: '2023-10-07', isTalent: true, talentNotes: '面试表现优秀，但暂无HC，建议回捞' },
-];
-
-const MOCK_ANNOUNCEMENTS: Announcement[] = [
-  { id: 'a1', title: '关于中秋节放假的通知', content: '全体员工请注意，公司将于9月29日至10月6日放假，请提前安排好工作。祝大家节日快乐！', date: '2023-09-20', type: 'NOTICE', authorName: '管理员', isSticky: true },
-  { id: 'a2', title: '新版考勤制度试运行', content: '即日起，所有员工需使用新系统进行人脸打卡，不再使用指纹考勤。', date: '2023-09-25', type: 'URGENT', authorName: '人事部' }
-];
-
-const generateMockAttendance = (staffList: Staff[]): AttendanceRecord[] => {
-  const records: AttendanceRecord[] = [];
-  const today = new Date();
-  staffList.filter(s => s.status === 'ACTIVE').forEach(staff => {
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-      if (!isWeekend && Math.random() > 0.2) {
-        records.push({ id: crypto.randomUUID(), staffId: staff.id, timestamp: new Date(date.setHours(8, 30)).toISOString(), type: 'IN', status: 'NORMAL' });
-        records.push({ id: crypto.randomUUID(), staffId: staff.id, timestamp: new Date(date.setHours(18, 0)).toISOString(), type: 'OUT', status: 'NORMAL' });
-      }
-    }
-  });
-  return records;
-};
-
-// Sidebar Component
-const Sidebar = ({ isOpen, setIsOpen, isAdmin, isLeader, currentPath, onNavigate, collapsed, toggleCollapsed, onOpenSettings }: { 
-  isOpen: boolean, 
-  setIsOpen: (v: boolean) => void, 
-  isAdmin: boolean, 
-  isLeader: boolean,
-  currentPath: string,
-  onNavigate: (path: string) => void,
-  collapsed: boolean,
-  toggleCollapsed: () => void,
-  onOpenSettings: () => void
-}) => {
-  const navItems = [
-    { name: '工作台', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: '我的打卡', path: '/attendance', icon: <Clock size={20} /> },
-  ];
-
-  // Leader / Admin features
-  if (isLeader || isAdmin) {
-    // Both Admin and Leader can access Queue Management
-    navItems.push({ name: '排队与叫号', path: '/queue', icon: <Layers size={20} /> });
-
-    // HR Management Section for Admin
-    if (isAdmin) {
-      navItems.push(
-        { name: 'STAFF面试', path: '/schedule', icon: <CalendarRange size={20} /> }, // Primary Interview Tool
-        { name: '成员管理', path: '/employees', icon: <Users size={20} /> } // Active Employees
-      );
-    }
-
-    // Both Admin and Leader can manage these, but with different scopes
-    navItems.push(
-      { name: isAdmin ? '全员报表' : '组内报表', path: '/reports', icon: <BarChart3 size={20} /> },
-      { name: '公告管理', path: '/announcements', icon: <Megaphone size={20} /> }
-    );
-  }
-
-  return (
-    <>
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setIsOpen(false)} />}
-      <aside 
-        className={`fixed top-0 left-0 z-30 h-full bg-slate-900 text-white transition-all duration-300 ease-in-out shadow-2xl flex flex-col
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-          ${collapsed ? 'w-20' : 'w-64'}
-        `}
-      >
-        <div className={`flex items-center h-16 border-b border-slate-800 transition-all shrink-0 ${collapsed ? 'justify-center px-0' : 'justify-between px-6'}`}>
-          {!collapsed && <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap overflow-hidden">WorkPulse</span>}
-          {collapsed && <span className="font-bold text-blue-400">WP</span>}
-          <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-white"><X size={24} /></button>
-        </div>
-        
-        <nav className="px-3 py-6 space-y-2 overflow-y-auto flex-1">
-          {navItems.map((item) => {
-            const isActive = currentPath === item.path;
-            return (
-              <a 
-                key={item.path} 
-                href={`#${item.path}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate(item.path);
-                  setIsOpen(false);
-                }} 
-                title={collapsed ? item.name : ''}
-                className={`flex items-center space-x-3 px-3 py-3 rounded-xl transition-all group relative
-                  ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-              >
-                <div className="shrink-0">{item.icon}</div>
-                {!collapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{item.name}</span>}
-              </a>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Actions */}
-        <div className="border-t border-slate-800 p-3 space-y-2 bg-slate-900 shrink-0">
-          {/* Settings Button (Admin Only) */}
-          {isAdmin && (
-            <button
-              onClick={onOpenSettings}
-              className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all ${collapsed ? 'justify-center' : ''}`}
-              title="系统设置"
-            >
-              <Settings size={20} />
-              {!collapsed && <span className="font-medium">系统设置</span>}
-            </button>
-          )}
-
-          {/* Collapse Toggle for Desktop */}
-          <button 
-            onClick={toggleCollapsed}
-            className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all ${collapsed ? 'justify-center' : ''}`}
-          >
-            {collapsed ? <ChevronRight size={20} /> : <div className="flex items-center gap-2"><ChevronLeft size={20} /> <span className="text-sm">收起菜单</span></div>}
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-};
-
-// Main App Component
 const App: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  // --- Global State ---
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Custom Hash Router
-  const [currentPath, setCurrentPath] = useState(window.location.hash.slice(1) || '/');
+  // --- Data Models (Synced with LocalStorage/Backend) ---
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [queueData, setQueueData] = useState<QueueTicket[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [registrationList, setRegistrationList] = useState<RegistrationRecord[]>([]);
+  const [onSiteRecords, setOnSiteRecords] = useState<RegistrationRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+
+  // --- Configuration & UI State ---
+  const [systemDomain, setSystemDomain] = useState('https://workpulse.app');
+  
+  const [attendanceConfig, setAttendanceConfig] = useState<AttendanceConfig>({ startTime: '09:00', endTime: '18:00', overtimeStart: '19:00' });
+  const [permissionSettings, setPermissionSettings] = useState<PermissionSettings>({
+      allowLeaderExport: true,
+      allowLeaderBroadcast: true,
+      allowStaffViewTeam: false,
+      showSensitiveInfo: true, 
+      enableCheckIn: true,
+  });
+  const [loginConfig, setLoginConfig] = useState<LoginConfig>({ 
+    title: 'STAFFTool', 
+    subtitle: '', 
+    imageUrl: '', 
+    logoUrl: '',
+    enableCandidateLogin: true 
+  });
+  const [registrationConfig, setRegistrationConfig] = useState<RegistrationConfig>({ masterPrefix: 'M', onSitePrefix: 'S' });
+
+  // --- Initialization ---
   useEffect(() => {
-    const handleHashChange = () => {
-      setCurrentPath(window.location.hash.slice(1) || '/');
+    const initApp = async () => {
+      setIsLoading(true);
+      // Simulate backend delay or wait for DOM
+      await new Promise(resolve => setTimeout(resolve, 300)); 
+
+      const load = (key: string, fallback: any) => {
+         const saved = localStorage.getItem(key);
+         try { return saved ? JSON.parse(saved) : fallback; } catch { return fallback; }
+      };
+
+      // Load all data
+      setStaffList(load('staffList', []));
+      setQueueData(load('queueData', []));
+      setAnnouncements(load('announcements', []));
+      setRegistrationList(load('registrationList', []));
+      setOnSiteRecords(load('onSiteRecords', []));
+      setGroups(load('groups', MOCK_GROUPS));
+      setAdminUsers(load('adminUsers', [{ username: 'admin', password: 'password' }]));
+      setSystemDomain(load('systemDomain', 'https://workpulse.app'));
+      
+      // Load Configs
+      setAttendanceConfig(load('attendanceConfig', { startTime: '09:00', endTime: '18:00', overtimeStart: '19:00' }));
+      setPermissionSettings(load('permissionSettings', { allowLeaderExport: true, allowLeaderBroadcast: true, allowStaffViewTeam: false, showSensitiveInfo: true, enableCheckIn: true }));
+      setLoginConfig(load('loginConfig', { title: 'STAFFTool', subtitle: '', imageUrl: '', logoUrl: '', enableCandidateLogin: true }));
+      setRegistrationConfig(load('registrationConfig', { masterPrefix: 'M', onSitePrefix: 'S' }));
+
+      // Load Session
+      setSession(load('userSession', null));
+
+      // Load Attendance
+      setAttendanceRecords(load('attendanceRecords', []));
+
+      setIsLoading(false);
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    initApp();
   }, []);
 
-  const navigate = (path: string) => {
-    window.location.hash = path;
+  // --- Real-time Sync & Persistence (Frontend-as-Backend) ---
+  const save = (key: string, data: any) => {
+      if(!isLoading) localStorage.setItem(key, JSON.stringify(data));
   };
 
-  // -- Global State --
-  const [userSession, setUserSession] = useState<UserSession | null>(null);
-  
-  const [staffList, setStaffList] = useState<Staff[]>(() => {
-    const saved = localStorage.getItem('wp_staffList');
-    return saved ? JSON.parse(saved) : MOCK_STAFF_DATA;
-  });
-
-  const [groupList, setGroupList] = useState<Group[]>(() => {
-    const saved = localStorage.getItem('wp_groups');
-    return saved ? JSON.parse(saved) : MOCK_GROUPS;
-  });
-  
-  const [allAttendanceRecords, setAllAttendanceRecords] = useState<AttendanceRecord[]>(() => {
-    const saved = localStorage.getItem('wp_allAttendance');
-    if (saved) return JSON.parse(saved);
-    return generateMockAttendance(MOCK_STAFF_DATA);
-  });
-
-  // NEW: Attendance Config State
-  const [attendanceConfig, setAttendanceConfig] = useState<AttendanceConfig>(() => {
-    const saved = localStorage.getItem('wp_attendanceConfig');
-    return saved ? JSON.parse(saved) : { startTime: '09:00', endTime: '18:00', overtimeStart: '19:00' };
-  });
-  
-  const [queue, setQueue] = useState<QueueTicket[]>(() => {
-    const saved = localStorage.getItem('wp_queue');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
-    const saved = localStorage.getItem('wp_announcements');
-    return saved ? JSON.parse(saved) : MOCK_ANNOUNCEMENTS;
-  });
-
-  const [scheduleData, setScheduleData] = useState<ScheduleData>(() => {
-    const saved = localStorage.getItem('wp_schedule');
-    return saved ? JSON.parse(saved) : { headers: [], dynamicHeaders: [], rows: [] };
-  });
-
-  // Persistence
-  useEffect(() => localStorage.setItem('wp_staffList', JSON.stringify(staffList)), [staffList]);
-  useEffect(() => localStorage.setItem('wp_groups', JSON.stringify(groupList)), [groupList]);
-  useEffect(() => localStorage.setItem('wp_allAttendance', JSON.stringify(allAttendanceRecords)), [allAttendanceRecords]);
-  useEffect(() => localStorage.setItem('wp_queue', JSON.stringify(queue)), [queue]);
-  useEffect(() => localStorage.setItem('wp_announcements', JSON.stringify(announcements)), [announcements]);
-  useEffect(() => localStorage.setItem('wp_schedule', JSON.stringify(scheduleData)), [scheduleData]);
-  useEffect(() => localStorage.setItem('wp_attendanceConfig', JSON.stringify(attendanceConfig)), [attendanceConfig]);
-
-  // Real-time polling for Interviewee
-  // This simulates a websocket connection by polling localStorage for changes
   useEffect(() => {
-    let interval: any;
-    if (userSession?.role === 'USER' && userSession.staff?.status === 'PENDING') {
-      interval = setInterval(() => {
-        const savedQueue = localStorage.getItem('wp_queue');
-        if (savedQueue) {
-          const parsedQueue = JSON.parse(savedQueue);
-          // Simple equality check to see if queue length changed or status changed
-          // In production, use deep comparison or socket
-          if (JSON.stringify(parsedQueue) !== JSON.stringify(queue)) {
-            setQueue(parsedQueue);
-          }
+    if (isLoading) return;
+    save('userSession', session);
+    save('staffList', staffList);
+    save('queueData', queueData);
+    save('announcements', announcements);
+    save('registrationList', registrationList);
+    save('onSiteRecords', onSiteRecords);
+    save('attendanceRecords', attendanceRecords);
+    save('groups', groups);
+    save('adminUsers', adminUsers);
+    
+    save('systemDomain', systemDomain);
+    save('attendanceConfig', attendanceConfig);
+    save('permissionSettings', permissionSettings);
+    save('loginConfig', loginConfig);
+    save('registrationConfig', registrationConfig);
+  }, [
+    session, staffList, queueData, announcements, registrationList, onSiteRecords, 
+    attendanceRecords, groups, adminUsers, 
+    systemDomain, attendanceConfig, permissionSettings, loginConfig, registrationConfig, isLoading
+  ]);
+
+  // Sync Listener (Cross-tab synchronization)
+  useEffect(() => {
+    if (isLoading) return;
+
+    const syncStateFromStorage = () => {
+      const syncItem = (key: string, setter: React.Dispatch<React.SetStateAction<any>>) => {
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setter((prev: any) => {
+              if (JSON.stringify(prev) !== saved) return parsed;
+              return prev;
+            });
+          } catch(e) { console.error('Sync error for ' + key, e); }
         }
-      }, 2000); // Check every 2 seconds
-    }
-    return () => clearInterval(interval);
-  }, [userSession, queue]);
+      };
 
+      syncItem('userSession', setSession); 
+      syncItem('queueData', setQueueData);
+      syncItem('attendanceRecords', setAttendanceRecords);
+      syncItem('registrationList', setRegistrationList);
+      syncItem('onSiteRecords', setOnSiteRecords);
+      syncItem('staffList', setStaffList);
+      syncItem('groups', setGroups);
+      syncItem('announcements', setAnnouncements);
+      syncItem('adminUsers', setAdminUsers);
+      syncItem('attendanceConfig', setAttendanceConfig);
+      syncItem('permissionSettings', setPermissionSettings);
+      syncItem('loginConfig', setLoginConfig);
+      syncItem('registrationConfig', setRegistrationConfig);
+      syncItem('systemDomain', setSystemDomain);
+    };
 
-  // Actions
+    window.addEventListener('storage', syncStateFromStorage);
+    const intervalId = setInterval(syncStateFromStorage, 2000);
+
+    return () => {
+      window.removeEventListener('storage', syncStateFromStorage);
+      clearInterval(intervalId);
+    };
+  }, [isLoading]);
+
+  // --- Actions ---
+
   const handleLogin = (userId: string, role: 'ADMIN' | 'USER') => {
     if (role === 'ADMIN') {
-      setUserSession({ userId, role });
+      setSession({ userId, role });
+      setActiveTab('dashboard');
     } else {
-      const staff = staffList.find(s => s.id === userId);
-      if (staff) setUserSession({ userId, role, staff });
-    }
+      let staff = staffList.find(s => s.id === userId);
+      // Fallback search in registration lists for candidates
+      if (!staff) {
+        const candidate = registrationList.find(r => r.id === userId) || onSiteRecords.find(r => r.id === userId);
+        if (candidate) {
+          staff = {
+            id: candidate.id,
+            name: candidate.name,
+            idCard: candidate.idCard || '',
+            phone: candidate.phone,
+            status: 'PENDING', 
+            roles: [],
+            avatar: '',
+            joinDate: candidate.submissionTime,
+            registrationNumber: candidate.registrationNumber
+          };
+        }
+      }
+
+      if (staff) {
+        setSession({ userId, role, staff });
+        const isPendingAllocation = staff.roles.some(r => r.groupId === 'g_pending_allocation');
+        const hasNoGroup = staff.roles.length === 0;
+        const isNotActive = staff.status === 'PENDING' || staff.status === 'INTERVIEWED';
+
+        if (isNotActive || isPendingAllocation || hasNoGroup) {
+          setActiveTab('interviewee_dashboard');
+        } else {
+          setActiveTab('dashboard');
+        }
+      }
+    };
   };
 
   const handleLogout = () => {
-    setUserSession(null);
-    navigate('/');
+    setSession(null);
+    setActiveTab('dashboard');
   };
 
-  const handleQueueCheckIn = (staffId: string) => {
-    const staff = staffList.find(s => s.id === staffId);
-    if (!staff || queue.some(t => t.staffId === staffId)) return;
-
-    const newTicket: QueueTicket = {
+  const handleStaffPunch = (type: 'IN' | 'OUT', photoUrl: string, status: AttendanceRecord['status'], timestamp: string) => {
+    if (!session?.staff) return;
+    const newRecord: AttendanceRecord = {
       id: crypto.randomUUID(),
-      staffId,
-      staffName: staff.name,
-      ticketNumber: `A-${String(queue.length + 1).padStart(3, '0')}`,
-      status: 'WAITING',
-      checkInTime: new Date().toISOString()
+      staffId: session.staff.id,
+      timestamp: timestamp, 
+      type,
+      photoUrl,
+      status
     };
-    setQueue(prev => [...prev, newTicket]);
+    setAttendanceRecords(prev => [newRecord, ...prev]);
   };
 
-  const handleUpdateTicketStatus = (ticketId: string, status: QueueTicket['status']) => {
-    setQueue(prev => {
-      const updatedQueue = prev.map(t => t.id === ticketId ? { ...t, status, calledTime: status === 'CALLED' ? new Date().toISOString() : t.calledTime } : t);
-      if (status === 'COMPLETED') {
-        const ticket = prev.find(t => t.id === ticketId);
-        if (ticket) {
-          setStaffList(currStaff => currStaff.map(s => s.id === ticket.staffId ? { ...s, status: 'INTERVIEWED' } : s));
-        }
+  const handleUpdateOrAddRecord = (staffId: string, dateStr: string, type: 'IN' | 'OUT', timeStr: string) => {
+    if (!timeStr) return;
+    const targetTimestamp = new Date(`${dateStr}T${timeStr}`);
+    const newStatus = calculateAttendanceStatus(type, targetTimestamp, attendanceConfig);
+    
+    let recordExists = false;
+    const updatedRecords = attendanceRecords.map(rec => {
+      if (rec.staffId === staffId && isSameDay(rec.timestamp, dateStr) && rec.type === type) {
+        recordExists = true;
+        return {
+          ...rec,
+          timestamp: targetTimestamp.toISOString(),
+          status: newStatus,
+          isManual: true,
+          photoUrl: rec.photoUrl 
+        };
       }
-      return updatedQueue;
+      return rec;
     });
-  };
-
-  const handleBatchAddStaff = (newStaffList: Staff[]) => {
-    setStaffList(prev => [...newStaffList, ...prev]);
-  };
-
-  // Find user's group leader info
-  const getCurrentUserGroupInfo = () => {
-    if (!userSession?.staff || userSession.staff.roles.length === 0) return null;
     
-    // Just grab the first group for demo purposes
-    const primaryRole = userSession.staff.roles[0];
-    
-    // Find leader of this group
-    const leader = staffList.find(s => 
-      s.roles.some(r => r.groupId === primaryRole.groupId && r.isLeader)
-    );
-
-    return {
-      groupName: primaryRole.groupName,
-      leaderName: leader ? leader.name : '未设置',
-      leaderPhone: leader && leader.phone ? leader.phone : '暂无联系方式'
-    };
-  };
-
-  // Views Logic
-  if (!userSession) {
-    return <Login staffList={staffList} onLogin={handleLogin} />;
-  }
-
-  // Interviewee View
-  if (userSession.role === 'USER' && userSession.staff?.status === 'PENDING') {
-    const myTicket = queue.find(t => t.staffId === userSession.userId && t.status !== 'COMPLETED' && t.status !== 'SKIPPED');
-    const ticketsAhead = queue.filter(t => t.status === 'WAITING' && new Date(t.checkInTime) < new Date(myTicket?.checkInTime || new Date())).length;
-    return <IntervieweeDashboard staff={userSession.staff} myTicket={myTicket} ticketsAhead={ticketsAhead} onLogout={handleLogout} />;
-  }
-
-  // Main App State Calculation
-  const isAdmin = userSession.role === 'ADMIN';
-  const currentStaff = userSession.staff;
-  const currentStaffId = currentStaff?.id || 'admin_placeholder';
-  
-  // Is this user a leader of ANY group?
-  const leaderRoles = currentStaff?.roles.filter(r => r.isLeader) || [];
-  const isLeader = leaderRoles.length > 0;
-  const leaderGroupIds = leaderRoles.map(r => r.groupId);
-
-  // Filter Announcements for current user
-  const visibleAnnouncements = announcements.filter(a => {
-    if (isAdmin) return true; // Admin sees all
-    if (!a.targetGroupId) return true; // Global
-    // User sees if they belong to target group
-    return currentStaff?.roles.some(r => r.groupId === a.targetGroupId);
-  });
-  
-  const myAttendanceRecords = allAttendanceRecords.filter(r => r.staffId === currentStaffId);
-  const myLastRecord = myAttendanceRecords[myAttendanceRecords.length - 1];
-  const myAttendanceStatus = (myLastRecord && myLastRecord.type === 'IN') ? AttendanceStatus.CLOCKED_IN : AttendanceStatus.CLOCKED_OUT;
-  
-  const groupInfo = getCurrentUserGroupInfo();
-
-  const handleMyClockIn = (photoUrl: string, status: AttendanceRecord['status']) => {
-    const newRecord: AttendanceRecord = { id: crypto.randomUUID(), staffId: currentStaffId, timestamp: new Date().toISOString(), type: 'IN', photoUrl, status };
-    setAllAttendanceRecords(prev => [...prev, newRecord]);
-  };
-  const handleMyClockOut = (photoUrl: string, status: AttendanceRecord['status']) => {
-    const newRecord: AttendanceRecord = { id: crypto.randomUUID(), staffId: currentStaffId, timestamp: new Date().toISOString(), type: 'OUT', photoUrl, status };
-    setAllAttendanceRecords(prev => [...prev, newRecord]);
-  };
-
-  const renderContent = () => {
-    switch (currentPath) {
-      case '/':
-        return <Dashboard 
-                  attendanceRecords={myAttendanceRecords} 
-                  queueData={queue} 
-                  announcements={visibleAnnouncements} 
-                  isAdmin={isAdmin}
-                  groupInfo={groupInfo}
-                />;
-      case '/attendance':
-        return <Attendance 
-                  status={myAttendanceStatus} 
-                  onClockIn={handleMyClockIn} 
-                  onClockOut={handleMyClockOut} 
-                  history={myAttendanceRecords} 
-                  config={attendanceConfig}
-                />;
-      case '/reports':
-        if (isAdmin || isLeader) {
-          return <AttendanceReports 
-                    staffList={staffList} 
-                    allRecords={allAttendanceRecords} 
-                    fixedGroupId={isLeader && !isAdmin ? leaderGroupIds[0] : undefined}
-                  />;
-        }
-        return <Dashboard attendanceRecords={myAttendanceRecords} queueData={queue} announcements={visibleAnnouncements} isAdmin={isAdmin} groupInfo={groupInfo} />;
-      case '/announcements':
-        if (isAdmin || isLeader) {
-          return <AnnouncementManager 
-                    currentUserRole={isAdmin ? 'ADMIN' : 'USER'}
-                    currentUserGroups={leaderRoles}
-                    currentUserName={userSession.staff?.name || '管理员'}
-                    announcements={announcements}
-                    onAddAnnouncement={(a) => setAnnouncements(prev => [a, ...prev])}
-                    onDeleteAnnouncement={(id) => setAnnouncements(prev => prev.filter(a => a.id !== id))}
-                  />;
-        }
-        return <Dashboard attendanceRecords={myAttendanceRecords} queueData={queue} announcements={visibleAnnouncements} isAdmin={isAdmin} groupInfo={groupInfo} />;
-      case '/queue':
-        if (isAdmin || isLeader) { // Leader can also access queue
-          return <QueueManager 
-                    pendingStaff={staffList.filter(s => s.status === 'PENDING')} 
-                    queue={queue}
-                    onCheckIn={handleQueueCheckIn}
-                    onUpdateTicketStatus={handleUpdateTicketStatus}
-                  />;
-        }
-        return <Dashboard attendanceRecords={myAttendanceRecords} queueData={queue} announcements={visibleAnnouncements} isAdmin={isAdmin} groupInfo={groupInfo} />;
-      
-      // Removed /candidates (Interview Management)
-      
-      case '/employees':
-        if (isAdmin) {
-          return <StaffManager 
-                    viewMode="EMPLOYEES"
-                    staffList={staffList} 
-                    groups={groupList}
-                    onUpdateStaff={(u) => setStaffList(prev => prev.map(s => s.id === u.id ? u : s))} 
-                    onAddStaff={(n) => setStaffList(prev => [n, ...prev])} 
-                    onBatchAddStaff={handleBatchAddStaff}
-                    onAddGroup={(g) => setGroupList(prev => [...prev, g])}
-                    onDeleteGroup={(id) => setGroupList(prev => prev.filter(g => g.id !== id))}
-                  />;
-        }
-        return <Dashboard attendanceRecords={myAttendanceRecords} queueData={queue} announcements={visibleAnnouncements} isAdmin={isAdmin} groupInfo={groupInfo} />;
-        
-      // Removed /talent-pool
-
-      // New Route: Staff Schedule Manager (Renamed Logic handled in Menu but component same)
-      case '/schedule':
-        if (isAdmin) {
-          return <StaffScheduleManager 
-                   scheduleData={scheduleData}
-                   onUpdateData={setScheduleData}
-                 />;
-        }
-        return <Dashboard attendanceRecords={myAttendanceRecords} queueData={queue} announcements={visibleAnnouncements} isAdmin={isAdmin} groupInfo={groupInfo} />;
-
-      default:
-        return <Dashboard 
-                  attendanceRecords={myAttendanceRecords} 
-                  queueData={queue} 
-                  announcements={visibleAnnouncements} 
-                  isAdmin={isAdmin}
-                  groupInfo={groupInfo}
-                />;
+    if (recordExists) {
+      setAttendanceRecords(updatedRecords);
+    } else {
+      const newRecord: AttendanceRecord = {
+        id: crypto.randomUUID(),
+        staffId,
+        timestamp: targetTimestamp.toISOString(),
+        type,
+        status: newStatus,
+        isManual: true
+      };
+      setAttendanceRecords(prev => [newRecord, ...prev]);
     }
   };
 
+  const handleQueueCheckIn = (staffId: string) => {
+    if (queueData.some(t => t.staffId === staffId)) return;
+    
+    let person: Staff | RegistrationRecord | undefined = staffList.find(s => s.id === staffId);
+    if (!person) person = registrationList.find(r => r.id === staffId);
+    if (!person) person = onSiteRecords.find(r => r.id === staffId);
+    
+    if (!person) return; 
+    
+    // Add Ticket
+    const newTicket: QueueTicket = {
+      id: crypto.randomUUID(),
+      ticketNumber: `A-${String(queueData.length + 1).padStart(3, '0')}`,
+      staffId: person.id,
+      staffName: person.name,
+      status: 'WAITING',
+      checkInTime: new Date().toISOString()
+    };
+    setQueueData(prev => [...prev, newTicket]);
+    
+    // Auto-generate Attendance Record
+    const photoUrl = 'avatar' in person ? person.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.id}`;
+    const now = new Date();
+    const status = calculateAttendanceStatus('IN', now, attendanceConfig);
+
+    const newRecord: AttendanceRecord = {
+      id: crypto.randomUUID(),
+      staffId: person.id,
+      timestamp: now.toISOString(),
+      type: 'IN',
+      photoUrl: photoUrl,
+      status: status
+    };
+    setAttendanceRecords(prev => [...prev, newRecord]);
+  };
+
+  const updateTicketStatus = (ticketId: string, status: QueueTicket['status']) => {
+    setQueueData(queueData.map(t => t.id === ticketId ? { ...t, status } : t));
+  };
+  
+  const handleBatchAddStaffFromReg = (newStaffList: Staff[]) => {
+    let count = 0;
+    const updatedStaffList = [...staffList];
+    newStaffList.forEach(newStaff => {
+       const exists = updatedStaffList.some(s => 
+          (s.idCard && s.idCard === newStaff.idCard) || 
+          (s.phone && s.phone === newStaff.phone && s.name === newStaff.name)
+       );
+       if (!exists) {
+         updatedStaffList.push(newStaff);
+         count++;
+       }
+    });
+    setStaffList(updatedStaffList);
+    alert(`已成功将 ${count} 名人员导入员工库。`);
+  };
+
+  // --- CRUD Wrappers ---
+  const handleAddGroup = (g: Group) => setGroups([...groups, g]);
+  const handleUpdateGroup = (g: Group) => setGroups(groups.map(grp => grp.id === g.id ? g : grp));
+  const handleDeleteGroup = (gid: string) => setGroups(groups.filter(g => g.id !== gid));
+  const handleUpdateStaff = (s: Staff) => setStaffList(staffList.map(st => st.id === s.id ? s : st));
+  const handleAddStaff = (s: Staff) => setStaffList([...staffList, s]);
+  const handleAddAdmin = (u: AdminUser) => {
+    if (adminUsers.some(a => a.username === u.username)) return false;
+    setAdminUsers([...adminUsers, u]);
+    return true;
+  };
+  const handleDeleteAdmin = (u: string) => {
+    if (adminUsers.length > 1) setAdminUsers(adminUsers.filter(a => a.username !== u));
+  };
+  const handleUpdateAdminPassword = (u: string, p: string) => setAdminUsers(adminUsers.map(a => a.username === u ? {...a, password: p} : a));
+
+  // --- Rendering Logic ---
+
+  const renderContent = () => {
+    if (isLoading) return <div className="flex h-full items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00A2E8]"></div></div>;
+
+    // Interviewee / Candidate Dashboard
+    if (activeTab === 'interviewee_dashboard' && session?.staff) {
+      const myTicket = queueData.find(t => t.staffId === session.staff?.id);
+      return <IntervieweeDashboard staff={session.staff} myTicket={myTicket} ticketsAhead={0} onLogout={handleLogout} />;
+    }
+    
+    // Main Tabs
+    switch (activeTab) {
+      case 'dashboard':
+        if (session?.role === 'USER' && session?.staff) {
+          // Identify all user groups
+          const userGroupIds = session.staff.roles.map(r => r.groupId);
+          const userGroup = groups.find(g => userGroupIds.includes(g.id)); // Primary group for display
+          
+          const myRecords = attendanceRecords.filter(r => r.staffId === session.staff?.id).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          const status = myRecords[0]?.type === 'IN' ? AttendanceStatus.CLOCKED_IN : AttendanceStatus.CLOCKED_OUT;
+          
+          return <StaffDashboard 
+              currentUser={session.staff}
+              group={userGroup}
+              leaders={staffList.filter(s => s.roles.some(r => userGroupIds.includes(r.groupId) && r.isLeader))}
+              staffList={staffList}
+              // Fixed: Filter announcements checking ALL user groups
+              announcements={announcements.filter(a => !a.targetGroupId || userGroupIds.includes(a.targetGroupId))}
+              attendanceStatus={status}
+              attendanceHistory={myRecords.filter(r => isSameDay(r.timestamp, new Date().toISOString()))}
+              attendanceConfig={attendanceConfig}
+              onClockIn={(p, s, t) => handleStaffPunch('IN', p, s, t)}
+              onClockOut={(p, s, t) => handleStaffPunch('OUT', p, s, t)}
+            />;
+        }
+        return <Dashboard 
+          attendanceRecords={attendanceRecords}
+          queueData={queueData}
+          announcements={announcements}
+          isAdmin={session?.role === 'ADMIN'}
+          staffList={staffList}
+          groups={groups}
+          currentUser={session?.staff}
+        />;
+
+      case 'reports':
+        let visibleGroups = groups;
+        if (session?.role === 'USER' && session.staff) {
+           const leaderGroupIds = session.staff.roles.filter(r => r.isLeader).map(r => r.groupId);
+           visibleGroups = groups.filter(g => leaderGroupIds.includes(g.id));
+        }
+        return <AttendanceReports 
+          staffList={staffList} 
+          groups={visibleGroups} 
+          allRecords={attendanceRecords}
+          session={session}
+          permissionSettings={permissionSettings}
+          attendanceConfig={attendanceConfig}
+          onUpdateOrAddRecord={handleUpdateOrAddRecord}
+        />;
+      
+      case 'checkin_system':
+        return <CheckInSystem 
+          queue={queueData}
+          registrationList={registrationList}
+          onSiteRecords={onSiteRecords}
+          staffList={staffList}
+          onCheckIn={handleQueueCheckIn}
+          onClearQueue={() => setQueueData([])}
+          onUpdateTicketStatus={updateTicketStatus}
+        />;
+
+      case 'training_checkin': 
+        return <TrainingCheckinManager 
+          queue={queueData}
+          registrationList={registrationList}
+          onSiteRecords={onSiteRecords} 
+          onUpdateOnSiteRecords={setOnSiteRecords}
+          staffList={staffList}
+          onUpdateRegistration={setRegistrationList}
+          onBatchAddStaff={handleBatchAddStaffFromReg}
+          permissionSettings={permissionSettings}
+          session={session}
+          registrationConfig={registrationConfig}
+        />;
+
+      case 'outsourced':
+        return <OutsourcedManager 
+          permissionSettings={permissionSettings}
+          staffList={staffList} 
+          groups={groups} 
+          registrationList={registrationList} 
+          onSiteRecords={onSiteRecords} 
+          onUpdateStaff={handleUpdateStaff} 
+          onAddStaff={handleAddStaff} 
+          onBatchAddStaff={handleBatchAddStaffFromReg}
+          onAddGroup={handleAddGroup} 
+          onUpdateGroup={handleUpdateGroup} 
+          onDeleteGroup={handleDeleteGroup} 
+        />;
+      case 'announcements':
+        return <AnnouncementManager currentUserRole={session?.role || 'USER'} currentUserGroups={session?.staff?.roles || []} announcements={announcements} onAddAnnouncement={(a) => setAnnouncements([a, ...announcements])} onDeleteAnnouncement={(id) => setAnnouncements(announcements.filter(a => a.id !== id))} currentUserName={session?.staff?.name || '管理员'} />;
+      case 'settings':
+        return <SystemSettings 
+          onSave={(s) => { setSystemDomain(s.domain); setAttendanceConfig(s.attendance); setPermissionSettings(s.permissions); setLoginConfig(s.loginConfig); setRegistrationConfig(s.registrationConfig); }} 
+          initialDomain={systemDomain} 
+          initialAttendanceConfig={attendanceConfig} 
+          initialPermissionSettings={permissionSettings}
+          initialLoginConfig={loginConfig}
+          initialRegistrationConfig={registrationConfig}
+          adminUsers={adminUsers}
+          onAddAdmin={handleAddAdmin}
+          onDeleteAdmin={handleDeleteAdmin}
+          onUpdateAdminPassword={handleUpdateAdminPassword}
+        />;
+      default: return null;
+    }
+  };
+
+  // If no session, show Login
+  if (!session) {
+      return <Login staffList={staffList} registrationList={registrationList} onLogin={handleLogin} adminUsers={adminUsers} loginConfig={loginConfig} defaultTab="CANDIDATE" />;
+  }
+
+  const isLeader = session?.role === 'USER' && session.staff?.roles.some(r => r.isLeader);
+  const canScanCheckIn = permissionSettings.enableCheckIn && session?.role === 'USER' && session.staff?.roles.some(r => r.groupId === 'g_out' || r.groupId === 'g_service_center');
+  const isFullScreen = activeTab === 'interviewee_dashboard';
+
+  // Symmetrical Top Navigation Items (Uniform width tab styling)
+  const navigationItems = [];
+  if (session?.role === 'ADMIN') {
+    navigationItems.push(
+      { id: 'dashboard', label: '工作台', icon: LayoutDashboard },
+      { id: 'training_checkin', label: '报名数据', icon: ClipboardCheck },
+      { id: 'checkin_system', label: '现场签到', icon: ScanLine },
+      { id: 'outsourced', label: '分组与编外', icon: Briefcase },
+      { id: 'announcements', label: '公告通知', icon: Megaphone },
+      { id: 'reports', label: '考勤报表', icon: BarChart3 },
+      { id: 'settings', label: '系统设置', icon: Settings },
+    );
+  } else {
+    navigationItems.push({ id: 'dashboard', label: '我的主页', icon: Home });
+    if (canScanCheckIn) {
+      navigationItems.push({ id: 'checkin_system', label: '现场签到', icon: ScanLine });
+    }
+    if (isLeader) {
+      navigationItems.push({ id: 'reports', label: '考勤记录', icon: BarChart3 });
+      if (permissionSettings.allowLeaderBroadcast) {
+        navigationItems.push({ id: 'announcements', label: '发布公告', icon: Megaphone });
+      }
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        setIsOpen={setIsSidebarOpen} 
-        isAdmin={isAdmin} 
-        isLeader={isLeader} 
-        currentPath={currentPath} 
-        onNavigate={navigate}
-        collapsed={isSidebarCollapsed}
-        toggleCollapsed={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
-        <header className="h-16 bg-white border-b border-gray-200 sticky top-0 z-10 flex items-center justify-between px-6 lg:px-8 shadow-sm">
-          <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden text-gray-600 hover:bg-gray-100 p-2 rounded-lg"><Menu size={24} /></button>
-          <div className="flex items-center gap-4 ml-auto">
-            <span className="text-sm font-semibold text-gray-800">
-              {userSession.staff?.name || '超级管理员'}
-              {isLeader && <span className="ml-2 bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full border border-purple-200">组长</span>}
-            </span>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-red-500 p-2"><LogOut size={20} /></button>
-          </div>
-        </header>
-
-        <main className="p-6 lg:p-8 max-w-7xl mx-auto w-full">
-          {renderContent()}
-        </main>
-      </div>
-
-      {/* Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <Settings className="text-indigo-600" /> 系统设置
-              </h2>
-              <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-               <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 mb-4">
-                 <h3 className="font-bold text-indigo-800 mb-2">考勤时间规则</h3>
-                 <p className="text-xs text-indigo-600">设置上下班及加班时间，系统将根据此规则自动判定员工打卡状态（迟到/早退/加班）。</p>
-               </div>
-
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">上班时间 (Start Time)</label>
-                 <input 
-                   type="time" 
-                   value={attendanceConfig.startTime}
-                   onChange={e => setAttendanceConfig({...attendanceConfig, startTime: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
-                 />
-               </div>
-               
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">下班时间 (End Time)</label>
-                 <input 
-                   type="time" 
-                   value={attendanceConfig.endTime}
-                   onChange={e => setAttendanceConfig({...attendanceConfig, endTime: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
-                 />
-               </div>
-
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">加班起始时间 (Overtime Start)</label>
-                 <input 
-                   type="time" 
-                   value={attendanceConfig.overtimeStart}
-                   onChange={e => setAttendanceConfig({...attendanceConfig, overtimeStart: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
-                 />
-               </div>
-            </div>
-
-            <div className="mt-8">
-              <button 
-                onClick={() => setIsSettingsOpen(false)}
-                className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 font-medium transition-colors"
-              >
-                保存设置
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col min-h-screen bg-[#F8FAFC] text-gray-900 font-sans selection:bg-sky-100 selection:text-sky-600">
+      {/* 🚀 Scroll Leak Shield: Fades out top background so content gracefully scrolls under and doesn't show at the very top */}
+      {!isFullScreen && (
+        <div className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#F8FAFC] via-[#F8FAFC] to-[#F8FAFC]/0 z-40 pointer-events-none" />
       )}
+
+      {/* 🚀 Image-inspired Premium Floating Top Navigation Header */}
+      {!isFullScreen && (
+        <header className="fixed top-4 left-4 right-4 md:left-6 md:right-6 lg:left-8 lg:right-8 z-50 bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.04)]">
+          <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              
+              {/* BRAND / LOGO IDENTITY (Matches the gorgeous cyan/sky blue theme) */}
+              <div 
+                className="flex items-center gap-2.5 cursor-pointer select-none group" 
+                onClick={() => setActiveTab('dashboard')}
+              >
+                <div className="w-9 h-9 bg-[#00A2E8] rounded-xl flex items-center justify-center shadow-md shadow-sky-500/20 group-hover:bg-[#008ec7] group-hover:scale-105 transition-all">
+                  <Play size={15} className="text-white fill-white translate-x-[1px]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1">
+                    <h1 className="text-sm font-black text-slate-950 tracking-tight leading-none group-hover:text-[#00A2E8] transition-colors">Staff</h1>
+                    <span className="text-[9px] font-bold bg-sky-50 text-[#00A2E8] px-1.5 py-0.5 rounded uppercase tracking-wide">Sys</span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-bold tracking-wider uppercase mt-0.5">一体化考勤管理后台</p>
+                </div>
+              </div>
+
+              {/* CENTER NAVIGATION: Symmetrical Horizontal Dock Capsule built directly from the image */}
+              <div className="hidden lg:flex items-center bg-[#EEF2F6]/70 border border-slate-200/30 p-1 rounded-full shadow-[inset_0_1.5px_3px_rgba(0,0,0,0.03)] my-2">
+                <nav className="flex items-center gap-1.5 no-scrollbar animate-in fade-in duration-300">
+                  {navigationItems.map(item => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`flex items-center justify-start h-9 w-9 hover:w-[136px] rounded-full font-bold text-xs tracking-wide transition-all duration-300 ease-in-out select-none cursor-pointer overflow-hidden group/btn border bg-transparent border-transparent`}
+                      >
+                        {/* Dynamic Icon circle container styled 1:1 to the image upload */}
+                        <div className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-all duration-350 shadow-sm ${
+                          isActive 
+                            ? 'bg-[#00A2E8] text-white shadow-md shadow-[#00A2E8]/25 scale-105' 
+                            : 'bg-white text-slate-500 border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)] group-hover/btn:border-slate-300/60'
+                        }`}>
+                          <Icon size={13} className={isActive ? 'text-white' : 'text-slate-600 group-hover/btn:text-slate-800'} />
+                        </div>
+                        <span className={`ml-2 text-[11px] font-black whitespace-nowrap transition-all duration-350 opacity-0 group-hover/btn:opacity-100 translate-x-1 group-hover/btn:translate-x-0 ${
+                          isActive ? 'text-[#00A2E8]' : 'text-slate-600 group-hover/btn:text-slate-900'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* RIGHT PROFILE & CONTROLS */}
+              <div className="flex items-center gap-4">
+                {/* User metadata label */}
+                <div className="hidden md:flex flex-col items-end text-right">
+                  <span className="text-xs font-bold text-slate-800 leading-none mb-1">{session?.staff?.name || '管理员'}</span>
+                  <span className="text-[9px] text-slate-500 font-extrabold bg-slate-100 border border-slate-200/40 px-2 py-0.5 rounded-md">
+                    {session?.role === 'ADMIN' ? '系统管理员' : (session?.staff?.roles[0]?.groupName || '在职员工')}
+                  </span>
+                </div>
+
+                {/* Logout Button */}
+                <button 
+                  onClick={handleLogout} 
+                  title="退出系统"
+                  className="text-slate-400 hover:text-red-500 transition-all bg-slate-50 hover:bg-rose-50 p-2 rounded-xl border border-slate-100 hover:border-rose-100 flex items-center justify-center cursor-pointer"
+                >
+                  <LogOut size={15} />
+                </button>
+
+                {/* Mobile Hamburger menu toggle */}
+                <button 
+                  onClick={() => setSidebarOpen(!sidebarOpen)} 
+                  className="lg:hidden text-slate-600 p-2 hover:bg-slate-100 rounded-xl border border-slate-200"
+                >
+                  {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          {/* MOBILE EXPANDED MENU DRAWER */}
+          {sidebarOpen && (
+            <div className="lg:hidden bg-white border-t border-gray-100 py-3 shadow-lg animate-in slide-in-from-top duration-200">
+              <div className="px-4 space-y-1">
+                {navigationItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button 
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }} 
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                        isActive 
+                          ? 'bg-sky-50 text-[#00A2E8]' 
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Icon size={18} className={isActive ? 'text-[#00A2E8]' : 'text-slate-400'} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+                <div className="pt-2 mt-2 border-t border-gray-100 px-4 flex items-center justify-between">
+                  <div className="text-xs">
+                    <p className="font-bold text-slate-800">{session?.staff?.name || '管理员'}</p>
+                    <p className="text-slate-400">{session?.role === 'ADMIN' ? '系统管理员' : (session?.staff?.roles[0]?.groupName || '在职员工')}</p>
+                  </div>
+                  <button onClick={handleLogout} className="text-xs text-[#00A2E8] font-bold bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                    <LogOut size={12} /> 退出登录
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </header>
+      )}
+
+      {/* Main viewport with precise floating header offsets */}
+      <main className="flex-1 flex flex-col w-full min-h-0 pt-[82px] md:pt-[92px] lg:pt-[100px] relative z-30">
+        <div className="flex-1 max-w-[1360px] w-full mx-auto p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-3 duration-350">
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 };

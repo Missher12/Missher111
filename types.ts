@@ -1,4 +1,9 @@
 
+export interface AdminUser {
+  username: string;
+  password: string;
+}
+
 export enum AttendanceStatus {
   CLOCKED_IN = 'CLOCKED_IN',
   CLOCKED_OUT = 'CLOCKED_OUT'
@@ -32,12 +37,39 @@ export interface Staff {
   // Talent Pool Fields
   isTalent?: boolean;
   talentNotes?: string;
+  registrationNumber?: string; // New: Display ID from the master table
 }
 
 export interface AttendanceConfig {
   startTime: string; // e.g., "09:00"
   endTime: string;   // e.g., "18:00"
   overtimeStart: string; // e.g., "19:00"
+}
+
+export interface LoginConfig {
+  title: string;
+  subtitle: string;
+  imageUrl: string; // Fallback or global image
+  logoUrl?: string; // New: Custom logo icon
+  // Specific backgrounds
+  candidateBg?: string;
+  staffBg?: string;
+  adminBg?: string;
+  // Feature Toggles
+  enableCandidateLogin?: boolean; // Controls visibility of the candidate tab
+}
+
+export interface RegistrationConfig {
+  masterPrefix: string; // e.g. "M"
+  onSitePrefix: string; // e.g. "S"
+}
+
+export interface PermissionSettings {
+  allowLeaderExport: boolean;
+  allowLeaderBroadcast: boolean;
+  allowStaffViewTeam: boolean;
+  showSensitiveInfo: boolean;
+  enableCheckIn: boolean; // Controls global visibility of scanning/check-in features
 }
 
 export interface AttendanceRecord {
@@ -48,6 +80,7 @@ export interface AttendanceRecord {
   photoUrl?: string; 
   location?: string;
   status: 'NORMAL' | 'LATE' | 'EARLY_LEAVE' | 'OVERTIME'; 
+  isManual?: boolean;
 }
 
 export interface QueueTicket {
@@ -64,30 +97,7 @@ export interface UserSession {
   userId: string;
   role: 'ADMIN' | 'USER';
   staff?: Staff;
-}
-
-export interface InterviewQuestion {
-  id: string;
-  text: string;
-  category: string;
-  difficulty: string;
-}
-
-export interface EvaluationResult {
-  score: number;
-  feedback: string;
-  strengths: string[];
-  weaknesses: string[];
-}
-
-export interface InterviewSession {
-  id: string;
-  jobTitle: string;
-  candidateName: string;
-  date: string;
-  questions: InterviewQuestion[];
-  responses: Record<string, string>;
-  evaluations: Record<string, EvaluationResult>;
+  token?: string; // Backend Integration: JWT Token
 }
 
 export interface Announcement {
@@ -102,24 +112,37 @@ export interface Announcement {
   isSticky?: boolean; // Only admin can sticky
 }
 
-// Staff Schedule / Roster Management
-export interface ScheduleRow {
+// New Registration Record Type (Legacy, kept for compatibility with existing imports)
+export interface RegistrationRecord {
   id: string;
-  staffId: string; // 编号
-  name: string;    // 姓名
-  dob: string;     // 出生日期
-  age: string;     // 年龄
-  address: string; // 现居住地址
-  notes: string;   // 备注
-  managementNotes?: string; // 新增：管理备注 (Editable)
-  schedule: Record<string, string>; // Dynamic columns: Key is date header, Value is content
-  // Talent Pool
-  isTalent?: boolean;
-  talentNotes?: string;
+  registrationNumber: string; 
+  name: string;               
+  gender?: string;            
+  phone?: string;             
+  idCard?: string;            
+  position?: string;          
+  submissionTime: string;     
+  dob?: string;               
+  age?: string;               
+  address?: string;           
+  notes?: string;             
+  managementNotes?: string;   
+  availability?: string;      
+  isTalent?: boolean;         
 }
 
-export interface ScheduleData {
-  headers: string[]; // All headers including fixed ones
-  dynamicHeaders: string[]; // Only the date/shift headers
-  rows: ScheduleRow[];
+// --- Backend Integration Types ---
+
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+  success: boolean;
+}
+
+export interface PaginatedList<T> {
+  list: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Announcement, GroupRole } from '../types';
+import { Announcement, GroupRole } from '../../types';
 import { Megaphone, Pin, Trash2, Send, Users, Globe } from 'lucide-react';
 
 interface AnnouncementManagerProps {
