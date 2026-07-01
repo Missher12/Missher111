@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Settings, Globe, Check, Server, Clock, Shield, Users, Plus, Trash2, Lock, User, Layout, Image as ImageIcon, Upload, Hash, Key, X, Smartphone, Briefcase, UserCheck } from 'lucide-react';
+import { Settings, Globe, Check, Server, Clock, Shield, Users, Plus, Trash2, Lock, User, Layout, Image as ImageIcon, Hash, Key, X } from 'lucide-react';
 import { AttendanceConfig, PermissionSettings, AdminUser, LoginConfig, RegistrationConfig } from '../../types';
 
 interface SystemSettingsProps {
@@ -22,26 +21,25 @@ const SettingsToggle: React.FC<{
   enabled: boolean;
   onToggle: () => void;
 }> = ({ label, description, enabled, onToggle }) => (
-  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg border border-gray-100 hover:bg-white transition-colors">
+  <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-[#E5EEF8] hover:bg-white transition-all duration-300">
     <div>
-      <h4 className="font-bold text-gray-800 text-sm">{label}</h4>
-      <p className="text-xs text-gray-500 mt-1">{description}</p>
+      <h4 className="font-bold text-slate-800 text-sm">{label}</h4>
+      <p className="text-xs text-slate-400 mt-1">{description}</p>
     </div>
     <button
       onClick={onToggle}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-        enabled ? 'bg-indigo-600' : 'bg-gray-200'
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-100 focus:ring-offset-2 ${
+        enabled ? 'bg-[#1677FF]' : 'bg-slate-200'
       }`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
           enabled ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
     </button>
   </div>
 );
-
 
 const SystemSettings: React.FC<SystemSettingsProps> = ({ 
   onSave, 
@@ -70,7 +68,6 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
   const [newPasswordInput, setNewPasswordInput] = useState('');
 
   const handleSave = () => {
-    // Basic clean up of input
     let cleanDomain = domain.trim();
     if (cleanDomain.endsWith('/')) {
         cleanDomain = cleanDomain.slice(0, -1);
@@ -121,7 +118,7 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
   const TABS = [
     { id: 'PERMISSIONS', label: '角色权限', icon: Shield },
-    { id: 'LOGIN', label: '登录页配置', icon: Layout },
+    { id: 'LOGIN', label: '登录配置', icon: Layout },
     { id: 'REGISTRATION', label: '编号规则', icon: Hash },
     { id: 'ADMINS', label: '管理员账户', icon: Users },
     { id: 'ATTENDANCE', label: '考勤规则', icon: Clock },
@@ -130,23 +127,23 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
   const ImageUploader = ({ label, value, uploadKey, height = 'h-48' }: { label: string, value?: string, uploadKey: any, height?: string }) => (
     <div className="flex-1">
-        <label className="block text-sm font-bold text-gray-700 mb-2">{label}</label>
-        <div className={`border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition-colors relative group ${height} flex items-center justify-center`}>
+        <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{label}</label>
+        <div className={`border-2 border-dashed border-slate-200/80 rounded-2xl p-4 text-center hover:bg-slate-50 transition-all duration-300 relative group ${height} flex items-center justify-center cursor-pointer`}>
         {value ? (
-            <div className="relative w-full h-full rounded-lg overflow-hidden shadow-sm">
+            <div className="relative w-full h-full rounded-xl overflow-hidden shadow-sm">
                 <img src={value} alt="Preview" className="w-full h-full object-cover" />
                 <button 
-                onClick={() => setLoginConfig({...loginConfig, [uploadKey]: ''})}
-                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                title="移除图片"
+                  onClick={() => setLoginConfig({...loginConfig, [uploadKey]: ''})}
+                  className="absolute top-2 right-2 bg-rose-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="移除图片"
                 >
                     <Trash2 size={14} />
                 </button>
             </div>
         ) : (
-            <div className="flex flex-col items-center justify-center text-gray-400">
-                <ImageIcon size={32} className="mb-2 opacity-20" />
-                <p className="text-xs">点击上传图片</p>
+            <div className="flex flex-col items-center justify-center text-slate-400">
+                <ImageIcon size={32} className="mb-2 opacity-20 text-[#1677FF]" />
+                <p className="text-xs font-semibold">点击上传图片</p>
             </div>
         )}
         <input 
@@ -160,28 +157,27 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
   );
 
   return (
-    <div className="space-y-6 animate-fade-in pb-24 max-w-4xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Settings className="text-indigo-600" /> 系统设置
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            配置系统的全局参数、考勤规则与角色权限
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in pb-24 w-full">
+      <div className="flex items-center gap-2.5">
+         <div className="p-2.5 bg-blue-50 rounded-xl text-[#1677FF]">
+            <Settings size={20} />
+         </div>
+         <div>
+            <h1 className="text-lg font-extrabold text-[#0c2f42]">系统设置</h1>
+            <p className="text-xs text-slate-400">配置系统的全局参数、考勤规则与角色权限</p>
+         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2 flex-wrap">
+      <div className="bg-white p-1.5 rounded-2xl shadow-sm border border-[#E5EEF8]/80 flex items-center gap-1.5 flex-wrap">
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 px-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all min-w-[100px] ${
-                activeTab === tab.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:bg-gray-50'
+              className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all min-w-[100px] ${
+                activeTab === tab.id ? 'bg-blue-50 text-[#1677FF] shadow-sm' : 'text-slate-500 hover:bg-slate-50'
               }`}
             >
               <Icon size={16} /> {tab.label}
@@ -192,9 +188,9 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Permissions Settings */}
       {activeTab === 'PERMISSIONS' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-           <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-              <Shield size={20} className="text-purple-500" /> 角色权限配置
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+           <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+              <Shield size={18} className="text-[#1677FF]" /> 角色权限配置
            </h2>
            <div className="space-y-4">
              <SettingsToggle
@@ -233,41 +229,41 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Registration Config Settings */}
       {activeTab === 'REGISTRATION' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-           <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-              <Hash size={20} className="text-orange-500" /> 报名编号规则
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+           <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+              <Hash size={18} className="text-[#1677FF]" /> 报名编号规则
            </h2>
-           <p className="text-sm text-gray-500 mb-6">自定义人员编号的前缀，用于区分不同来源的报名数据。</p>
+           <p className="text-xs text-slate-400 mb-6 font-semibold">自定义人员编号的前缀，用于区分不同来源的报名数据。</p>
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">汇总名单前缀</label>
+                 <label className="block text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">汇总名单前缀</label>
                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono font-bold">#</div>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">#</div>
                     <input 
                       type="text" 
                       value={registrationConfig.masterPrefix} 
                       onChange={e => setRegistrationConfig({...registrationConfig, masterPrefix: e.target.value})}
-                      className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 uppercase font-mono"
+                      className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 uppercase font-semibold"
                       placeholder="默认: M"
                     />
                  </div>
-                 <p className="text-xs text-gray-400 mt-2">例如: <span className="font-mono bg-gray-100 px-1 rounded">{registrationConfig.masterPrefix || 'M'}00001</span></p>
+                 <p className="text-xs text-slate-400 mt-2 font-medium">例如: <span className="bg-slate-100 px-1.5 py-0.5 rounded-md font-bold text-slate-600">{registrationConfig.masterPrefix || 'M'}00001</span></p>
               </div>
               
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">现场报名前缀</label>
+                 <label className="block text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">现场报名前缀</label>
                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-mono font-bold">#</div>
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">#</div>
                     <input 
                       type="text" 
                       value={registrationConfig.onSitePrefix} 
                       onChange={e => setRegistrationConfig({...registrationConfig, onSitePrefix: e.target.value})}
-                      className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 uppercase font-mono"
+                      className="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 uppercase font-semibold"
                       placeholder="默认: S"
                     />
                  </div>
-                 <p className="text-xs text-gray-400 mt-2">例如: <span className="font-mono bg-gray-100 px-1 rounded">{registrationConfig.onSitePrefix || 'S'}00001</span></p>
+                 <p className="text-xs text-slate-400 mt-2 font-medium">例如: <span className="bg-slate-100 px-1.5 py-0.5 rounded-md font-bold text-slate-600">{registrationConfig.onSitePrefix || 'S'}00001</span></p>
               </div>
            </div>
         </div>
@@ -275,18 +271,18 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Login Configuration Settings */}
       {activeTab === 'LOGIN' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-           <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-              <Layout size={20} className="text-pink-500" /> 登录页个性化
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+           <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+              <Layout size={18} className="text-[#1677FF]" /> 登录页个性化
            </h2>
            <div className="space-y-8">
               
               {/* Feature Toggle */}
-              <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
+              <div className="bg-blue-50/40 rounded-2xl p-4 border border-blue-100/40">
                  <SettingsToggle
                     label="启用面试签到入口"
                     description="在登录页显示“面试签到”选项卡。关闭后仅显示员工和管理员登录。"
-                    enabled={loginConfig.enableCandidateLogin !== false} // Default true
+                    enabled={loginConfig.enableCandidateLogin !== false}
                     onToggle={() => setLoginConfig(prev => ({...prev, enableCandidateLogin: !prev.enableCandidateLogin}))}
                  />
               </div>
@@ -294,22 +290,22 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
               {/* Branding Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">系统标题</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">系统标题</label>
                     <input 
                         type="text" 
                         value={loginConfig.title} 
                         onChange={e => setLoginConfig({...loginConfig, title: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="默认: STAFFTool"
+                        className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
+                        placeholder="默认: STAFF SYSTEM"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">副标题 / Slogan</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">副标题 / Slogan</label>
                     <input 
                         type="text" 
                         value={loginConfig.subtitle} 
                         onChange={e => setLoginConfig({...loginConfig, subtitle: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
                         placeholder="留空则不显示"
                     />
                   </div>
@@ -317,24 +313,23 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
               {/* Dynamic Role Backgrounds */}
               <div>
-                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                      <ImageIcon size={16} className="text-indigo-500" /> 角色背景图配置 (三等分)
+                  <h3 className="text-sm font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                      <ImageIcon size={16} className="text-[#1677FF]" /> 角色背景图配置 (三等分)
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <ImageUploader label="面试/签到 背景" value={loginConfig.candidateBg} uploadKey="candidateBg" />
                       <ImageUploader label="员工/编外 背景" value={loginConfig.staffBg} uploadKey="staffBg" />
                       <ImageUploader label="管理后台 背景" value={loginConfig.adminBg} uploadKey="adminBg" />
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">点击Tab切换时，登录页左侧（电脑端）或顶部（手机端）将展示对应的图片。建议比例：9:16 (竖屏) 或 3:4。</p>
+                  <p className="text-xs text-slate-400 mt-2.5 font-semibold">点击Tab切换时，登录页左侧（电脑端）或顶部（手机端）将展示对应的图片。建议比例：9:16 (竖屏) 或 3:4。</p>
               </div>
 
-              <div className="pt-6 border-t border-gray-50">
-                 <h3 className="text-sm font-bold text-gray-800 mb-4">通用资源</h3>
-                 <div className="flex gap-6">
-                    <div className="w-48">
+              <div className="pt-6 border-t border-[#E5EEF8]">
+                 <h3 className="text-sm font-extrabold text-slate-800 mb-4">通用资源</h3>
+                 <div className="flex flex-col sm:flex-row gap-6">
+                    <div className="w-full sm:w-48">
                         <ImageUploader label="系统图标 (Logo)" value={loginConfig.logoUrl} uploadKey="logoUrl" height="h-32" />
                     </div>
-                    {/* Kept as fallback/global */}
                     <div className="flex-1">
                         <ImageUploader label="默认/兜底背景图" value={loginConfig.imageUrl} uploadKey="imageUrl" height="h-32" />
                     </div>
@@ -346,73 +341,73 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Admin Accounts Settings */}
       {activeTab === 'ADMINS' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-          <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-            <Users size={20} className="text-green-500" /> 管理员账户
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+          <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+            <Users size={18} className="text-[#1677FF]" /> 管理员账户
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Add New Admin Form */}
             <div>
-              <h3 className="font-bold text-gray-700 mb-4">添加新管理员</h3>
+              <h3 className="font-extrabold text-slate-800 text-sm mb-4">添加新管理员</h3>
               <form onSubmit={handleAddAdmin} className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600 mb-1 block">用户名</label>
+                  <label className="text-xs font-bold text-slate-500 mb-1.5 block">用户名</label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"
                       value={newAdmin.username}
                       onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
                       placeholder="设置登录名"
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600 mb-1 block">密码</label>
+                  <label className="text-xs font-bold text-slate-500 mb-1.5 block">密码</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="password"
                       value={newAdmin.password}
                       onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                       placeholder="设置登录密码"
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-green-600 text-white py-2.5 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#1677FF] text-white py-2.5 rounded-xl font-bold hover:bg-[#0B5FCC] transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-100/20"
                 >
-                  <Plus size={18} /> 添加账户
+                  <Plus size={16} /> 添加账户
                 </button>
               </form>
             </div>
             {/* Existing Admins List */}
             <div>
-              <h3 className="font-bold text-gray-700 mb-4">现有管理员 ({adminUsers.length})</h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+              <h3 className="font-extrabold text-slate-800 text-sm mb-4">现有管理员 ({adminUsers.length})</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {adminUsers.map(user => (
-                  <div key={user.username} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg group">
-                    <span className="font-medium text-gray-800">{user.username}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div key={user.username} className="flex items-center justify-between p-3 bg-slate-50 border border-[#E5EEF8] rounded-xl group hover:bg-white hover:border-blue-100 hover:shadow-sm transition-all duration-300">
+                    <span className="font-bold text-slate-800 text-sm">{user.username}</span>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button
                         onClick={() => {
                           setPasswordEditUser(user.username);
                           setNewPasswordInput('');
                         }}
-                        className="text-gray-400 hover:text-indigo-500 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"
+                        className="text-slate-400 hover:text-[#1677FF] p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
                         title="修改密码"
                       >
-                        <Key size={16} />
+                        <Key size={14} />
                       </button>
                       <button
                         onClick={() => onDeleteAdmin(user.username)}
-                        className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                        className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
                         title="删除账户"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -425,16 +420,16 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Domain Settings */}
       {activeTab === 'DOMAIN' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-           <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-              <Globe size={20} className="text-indigo-500" /> 访问与域名配置
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+           <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+              <Globe size={18} className="text-[#1677FF]" /> 访问与域名配置
            </h2>
            <div className="space-y-6">
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">自定义访问域名 / IP</label>
-                 <p className="text-xs text-gray-500 mb-2">用于生成表单分享链接和二维码。若部署在内网，请填写服务器局域网IP。</p>
-                 <div className="flex items-center gap-2 max-w-lg">
-                    <div className="bg-gray-100 p-2.5 rounded-l-lg border border-gray-300 border-r-0 text-gray-500">
+                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">自定义访问域名 / IP</label>
+                 <p className="text-xs text-slate-400 mb-2.5 font-semibold">用于生成表单分享链接和二维码。若部署在内网，请填写服务器局域网IP。</p>
+                 <div className="flex items-center max-w-lg">
+                    <div className="bg-slate-100 p-3 rounded-l-xl border border-slate-200 border-r-0 text-slate-500 shrink-0">
                        <Server size={18} />
                     </div>
                     <input 
@@ -442,7 +437,7 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
                       value={domain}
                       onChange={(e) => setDomain(e.target.value)}
                       placeholder="例如: https://hr.mycompany.com 或 http://192.168.1.100"
-                      className="flex-1 border border-gray-300 rounded-r-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-slate-200 p-2.5 rounded-r-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                     />
                  </div>
               </div>
@@ -452,40 +447,40 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Attendance Settings */}
       {activeTab === 'ATTENDANCE' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 animate-fade-in">
-           <h2 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2 pb-4 border-b border-gray-100">
-              <Clock size={20} className="text-blue-500" /> 考勤时间规则
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8]/80 p-6 md:p-8 animate-fade-in">
+           <h2 className="text-base font-extrabold text-[#0c2f42] mb-6 flex items-center gap-2 pb-4 border-b border-slate-50">
+              <Clock size={18} className="text-[#1677FF]" /> 考勤时间规则
            </h2>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">上班时间 (Start)</label>
+                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">上班时间 (Start)</label>
                  <input 
                    type="time"
                    value={attendanceConfig.startTime}
                    onChange={(e) => setAttendanceConfig({...attendanceConfig, startTime: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                   className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                  />
-                 <p className="text-xs text-gray-400 mt-1">在此时间后打卡记为迟到</p>
+                 <p className="text-xs text-slate-400 mt-1.5 font-medium">在此时间后打卡记为迟到</p>
               </div>
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">下班时间 (End)</label>
+                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">下班时间 (End)</label>
                  <input 
                    type="time"
                    value={attendanceConfig.endTime}
                    onChange={(e) => setAttendanceConfig({...attendanceConfig, endTime: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                   className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                  />
-                 <p className="text-xs text-gray-400 mt-1">在此时间前打卡记为早退</p>
+                 <p className="text-xs text-slate-400 mt-1.5 font-medium">在此时间前打卡记为早退</p>
               </div>
               <div>
-                 <label className="block text-sm font-bold text-gray-700 mb-2">加班起始 (Overtime)</label>
+                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">加班起始 (Overtime)</label>
                  <input 
                    type="time"
                    value={attendanceConfig.overtimeStart}
                    onChange={(e) => setAttendanceConfig({...attendanceConfig, overtimeStart: e.target.value})}
-                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                   className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                  />
-                 <p className="text-xs text-gray-400 mt-1">在此时间后打卡记为加班</p>
+                 <p className="text-xs text-slate-400 mt-1.5 font-medium">在此时间后打卡记为加班</p>
               </div>
            </div>
         </div>
@@ -496,7 +491,7 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
           <button 
             onClick={handleSave}
             className={`px-8 py-3 rounded-xl text-white font-bold transition-all flex items-center gap-2 shadow-lg ${
-              saved ? 'bg-green-600 hover:bg-green-700 shadow-green-200 scale-105' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 hover:-translate-y-0.5'
+              saved ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100 scale-105' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-blue-100/20 hover:-translate-y-0.5'
             }`}
           >
             {saved ? <Check size={20} /> : <Settings size={20} />}
@@ -506,38 +501,38 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Change Password Modal */}
       {passwordEditUser && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in duration-200 border border-[#E5EEF8]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg text-gray-800">修改密码: {passwordEditUser}</h3>
-              <button onClick={() => setPasswordEditUser(null)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
+              <h3 className="font-extrabold text-base text-slate-800">修改密码: {passwordEditUser}</h3>
+              <button onClick={() => setPasswordEditUser(null)} className="text-slate-400 hover:text-slate-600 p-1 bg-slate-50 rounded-full">
+                <X size={16} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-600 mb-1 block">新密码</label>
+                <label className="text-xs font-bold text-slate-500 mb-1.5 block">新密码</label>
                 <div className="relative">
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="password"
                     value={newPasswordInput}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
                     placeholder="输入新密码"
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 font-semibold"
                   />
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setPasswordEditUser(null)}
-                  className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-bold text-xs transition-colors"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleChangePasswordSubmit}
-                  className="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-colors"
+                  className="flex-1 py-2.5 bg-[#1677FF] text-white rounded-xl hover:bg-[#0B5FCC] font-bold text-xs transition-colors shadow-sm shadow-blue-100/20"
                 >
                   确认修改
                 </button>

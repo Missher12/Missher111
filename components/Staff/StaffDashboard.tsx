@@ -58,35 +58,35 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
 
       {/* Stats Widgets */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">今日日期</span>
-              <CalendarDays size={16} className="text-blue-500" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase">今日日期</span>
+              <CalendarDays size={16} className="text-[#1677FF]" />
            </div>
-           <p className="font-bold text-gray-800 text-sm">{currentDate}</p>
+           <p className="font-bold text-[#102A43] text-sm">{currentDate}</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">班次时间</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">班次时间</span>
               <Clock size={16} className="text-orange-500" />
            </div>
-           <p className="font-bold text-gray-800 text-sm font-mono">{attendanceConfig.startTime} - {attendanceConfig.endTime}</p>
+           <p className="font-bold text-[#102A43] text-sm font-mono">{attendanceConfig.startTime} - {attendanceConfig.endTime}</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">当前状态</span>
-              <Zap size={16} className={attendanceStatus === 'CLOCKED_IN' ? "text-green-500" : "text-gray-300"} />
+              <span className="text-[10px] font-bold text-slate-400 uppercase">当前状态</span>
+              <Zap size={16} className={attendanceStatus === 'CLOCKED_IN' ? "text-green-500" : "text-slate-300"} />
            </div>
-           <p className={`font-bold text-sm ${attendanceStatus === 'CLOCKED_IN' ? 'text-green-600' : 'text-gray-400'}`}>
+           <p className={`font-bold text-sm ${attendanceStatus === 'CLOCKED_IN' ? 'text-green-600' : 'text-slate-400'}`}>
               {attendanceStatus === 'CLOCKED_IN' ? '工作中' : '休息中'}
            </p>
         </div>
-        <div className="bg-[#0c2f42] p-4 rounded-2xl shadow-md text-white flex flex-col justify-between h-24 border border-sky-900/40">
+        <div className="bg-gradient-to-br from-[#1677FF] to-[#0B5FCC] p-4 rounded-2xl shadow-sm text-white flex flex-col justify-between h-24 border border-[#1677FF]/10">
            <div className="flex justify-between items-start opacity-80">
-              <span className="text-[10px] font-bold uppercase">天气</span>
+              <span className="text-[10px] font-bold uppercase text-blue-100">天气</span>
               <Sun size={16} />
            </div>
-           <p className="font-bold text-sm">晴朗 26°C</p>
+           <p className="font-bold text-sm text-white">晴朗 26°C</p>
         </div>
       </div>
 
@@ -94,10 +94,10 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
           
           {/* Main Attendance Area */}
           <div className="lg:col-span-2 space-y-6">
-             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100 h-[600px] flex flex-col relative overflow-hidden">
+             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-[#E5EEF8] h-[600px] flex flex-col relative overflow-hidden">
                 <div className="flex items-center justify-between mb-6 relative z-10">
-                   <h2 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                      <MapPin className="text-[#00A2E8]" size={24} /> 考勤打卡
+                   <h2 className="font-bold text-xl text-slate-900 flex items-center gap-2">
+                      <MapPin className="text-[#1677FF]" size={24} /> 考勤打卡
                    </h2>
                    <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full font-bold border border-green-100 flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> 设备正常
@@ -118,31 +118,31 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
           <div className="space-y-6 flex flex-col">
              
              {/* Group Info */}
-             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5EEF8]">
                 <div className="flex items-center justify-between mb-6">
-                   <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                      <Briefcase size={20} className="text-[#00A2E8]" /> 所属分组
+                   <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                      <Briefcase size={20} className="text-[#1677FF]" /> 所属分组
                    </h3>
-                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg font-bold">
+                   <span className="text-xs bg-blue-50 text-[#1677FF] px-2 py-1 rounded-lg font-bold border border-blue-100/30">
                       {group?.name || '未分配'}
                    </span>
                 </div>
 
                 {/* Leader */}
-                <div className="bg-purple-50 rounded-xl p-4 mb-4 border border-purple-100">
-                   <p className="text-[10px] text-purple-400 font-bold uppercase mb-2 flex items-center gap-1">
+                <div className="bg-blue-50/60 rounded-xl p-4 mb-4 border border-blue-100/50">
+                   <p className="text-[10px] text-[#1677FF] font-bold uppercase mb-2 flex items-center gap-1">
                       <Shield size={10} /> 组长信息
                    </p>
                    {activeLeaders.length > 0 ? (
                       <div className="space-y-3">
                         {activeLeaders.map(l => (
                           <div key={l.id} className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center font-bold text-sm shrink-0">
+                             <div className="w-10 h-10 rounded-full bg-blue-100 text-[#1677FF] flex items-center justify-center font-bold text-sm shrink-0">
                                 {l.name[0]}
                              </div>
                              <div className="min-w-0">
                                 <p className="font-bold text-gray-800 text-sm truncate">{l.name}</p>
-                                <p className="text-xs text-purple-600 flex items-center gap-1 font-mono truncate">
+                                <p className="text-xs text-[#0B5FCC] flex items-center gap-1 font-mono truncate">
                                    <Phone size={10} /> {l.phone || '无电话'}
                                 </p>
                              </div>
@@ -182,12 +182,12 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
              </div>
 
              {/* Punch History */}
-             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex-1 min-h-[220px]">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-50">
-                   <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                      <Footprints size={18} className="text-[#00A2E8]" /> 今日足迹
+             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5EEF8] flex-1 min-h-[220px]">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E5EEF8]">
+                   <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                      <Footprints size={18} className="text-[#1677FF]" /> 今日足迹
                    </h3>
-                   <span className="bg-sky-50 text-[#00A2E8] text-[10px] px-2 py-0.5 rounded-full font-bold">{punchCount} 次打卡</span>
+                   <span className="bg-blue-50 text-[#1677FF] text-[10px] px-2 py-0.5 rounded-full font-bold">{punchCount} 次打卡</span>
                 </div>
                 
                 <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
@@ -211,7 +211,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
                                      </p>
                                   </div>
                                   {record.photoUrl && (
-                                     <div onClick={() => setSelectedPhoto(record.photoUrl || null)} className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-200 transition-all shrink-0">
+                                     <div onClick={() => setSelectedPhoto(record.photoUrl || null)} className="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-sky-200 transition-all shrink-0">
                                         <img src={record.photoUrl} alt="打卡" className="w-full h-full object-cover" />
                                      </div>
                                   )}
@@ -224,22 +224,22 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
              </div>
 
              {/* Announcements */}
-             <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 max-h-[200px] flex flex-col">
+             <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#E5EEF8] max-h-[200px] flex flex-col">
                 <div className="flex justify-between items-center mb-3 shrink-0">
-                   <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Bell size={16} className="text-orange-500" /> 通知公告</h3>
+                   <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Bell size={16} className="text-[#1677FF]" /> 通知公告</h3>
                 </div>
                 <div className="overflow-y-auto pr-1 custom-scrollbar space-y-2">
                    {announcements.length === 0 ? <p className="text-xs text-gray-300 text-center py-4">暂无新通知</p> : announcements.map((notice) => (
                          <div 
                            key={notice.id} 
                            onClick={() => setSelectedAnnouncement(notice)}
-                           className="p-2 rounded-lg bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all cursor-pointer group"
+                           className="p-2 rounded-lg bg-slate-50 border border-[#E5EEF8] hover:bg-white hover:border-blue-100 hover:shadow-sm transition-all cursor-pointer group"
                          >
                             <div className="flex justify-between items-center mb-0.5">
-                               <span className={`text-[10px] px-1 rounded ${notice.isSticky ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>{notice.isSticky ? '置顶' : '通知'}</span>
+                               <span className={`text-[10px] px-1 rounded ${notice.isSticky ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-[#1677FF]'}`}>{notice.isSticky ? '置顶' : '通知'}</span>
                                <span className="text-[10px] text-gray-400">{notice.date}</span>
                             </div>
-                            <p className="text-xs text-gray-700 truncate group-hover:text-indigo-600 transition-colors">{notice.title}</p>
+                            <p className="text-xs text-gray-700 truncate group-hover:text-[#1677FF] transition-colors">{notice.title}</p>
                          </div>
                    ))}
                 </div>
@@ -257,7 +257,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
       {selectedAnnouncement && (
          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedAnnouncement(null)}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300 flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
-               <div className="p-6 border-b border-gray-100 flex justify-between items-start">
+               <div className="p-6 border-b border-[#E5EEF8] flex justify-between items-start">
                   <div className="pr-4">
                      <div className="flex items-center gap-2 mb-2">
                         <span className={`text-xs px-2 py-0.5 rounded font-bold ${selectedAnnouncement.isSticky ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -271,12 +271,12 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
                </div>
                
                <div className="p-6 overflow-y-auto custom-scrollbar">
-                  <div className="prose prose-sm prose-indigo max-w-none text-gray-600 whitespace-pre-wrap leading-relaxed">
+                  <div className="prose prose-sm prose-sky max-w-none text-gray-600 whitespace-pre-wrap leading-relaxed">
                      {selectedAnnouncement.content}
                   </div>
-                  <div className="mt-8 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                  <div className="mt-8 pt-4 border-t border-[#E5EEF8] flex items-center justify-between text-xs text-gray-400">
                      <span className="flex items-center gap-1"><Shield size={12} /> 发布人: {selectedAnnouncement.authorName}</span>
-                     <span>STAFFTool 公告系统</span>
+                     <span>STAFF SYSTEM 公告系统</span>
                   </div>
                </div>
             </div>

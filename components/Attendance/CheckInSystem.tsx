@@ -60,7 +60,7 @@ const CheckInSystem: React.FC<CheckInSystemProps> = ({
   return (
     <div className="flex flex-col h-[calc(100vh-100px)] animate-fade-in bg-gray-50/50">
       <div className="flex items-center gap-2 pb-4 px-6 pt-4 bg-white border-b border-gray-200 shrink-0">
-        <div className="p-2 bg-[#00A2E8] rounded-lg text-white shadow-lg shadow-sky-100">
+        <div className="p-2 bg-[#1677FF] rounded-lg text-white shadow-lg shadow-blue-100/20">
             <ScanLine size={20} />
         </div>
         <div>

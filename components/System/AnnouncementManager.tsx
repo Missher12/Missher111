@@ -65,25 +65,30 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">公告管理</h1>
-        <p className="text-gray-500 text-sm">发布通知给全员或特定小组成员</p>
+    <div className="space-y-6 animate-fade-in pb-20">
+      <div className="flex items-center gap-2.5">
+         <div className="p-2.5 bg-blue-50 rounded-xl text-[#1677FF]">
+            <Megaphone size={20} />
+         </div>
+         <div>
+            <h1 className="text-lg font-extrabold text-[#0c2f42]">公告通知</h1>
+            <p className="text-xs text-slate-400">发布通知给全员或特定小组成员</p>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Create Form */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
-          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <Send size={18} className="text-indigo-600" /> 发布新公告
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E5EEF8] hover:shadow-md transition-all duration-300 h-fit">
+          <h3 className="font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+            <Send size={16} className="text-[#1677FF]" /> 发布新公告
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">发布范围</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">发布范围</label>
               <select 
                 value={targetGroupId}
                 onChange={(e) => setTargetGroupId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 cursor-pointer"
               >
                 {currentUserRole === 'ADMIN' && (
                   <option value="GLOBAL">全员可见 (Global)</option>
@@ -95,25 +100,25 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">标题</label>
               <input 
                 type="text" 
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
                 placeholder="请输入公告标题"
               />
             </div>
 
             <div>
-               <label className="block text-sm font-medium text-gray-700 mb-1">内容详情</label>
+               <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">内容详情</label>
                <textarea 
                  required
                  rows={4}
                  value={content}
                  onChange={(e) => setContent(e.target.value)}
-                 className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                 className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 resize-none"
                  placeholder="请输入公告内容..."
                />
             </div>
@@ -125,15 +130,15 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
                   id="sticky" 
                   checked={isSticky}
                   onChange={(e) => setIsSticky(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                  className="rounded text-[#1677FF] focus:ring-[#1677FF] cursor-pointer"
                 />
-                <label htmlFor="sticky" className="text-sm text-gray-700 flex items-center gap-1 cursor-pointer">
-                  <Pin size={14} /> 置顶公告
+                <label htmlFor="sticky" className="text-xs font-bold text-slate-600 flex items-center gap-1 cursor-pointer">
+                  <Pin size={12} className="rotate-45" /> 置顶公告
                 </label>
               </div>
             )}
 
-            <button type="submit" className="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 font-medium transition-colors">
+            <button type="submit" className="w-full bg-[#1677FF] text-white py-2.5 rounded-xl hover:bg-[#0B5FCC] font-extrabold text-sm transition-all shadow-sm shadow-blue-100/20">
               立即发布
             </button>
           </form>
@@ -141,37 +146,37 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
 
         {/* List */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="font-bold text-gray-800">历史公告列表</h3>
+          <h3 className="font-extrabold text-slate-800 flex items-center gap-2 mb-2">历史公告列表</h3>
           {visibleAnnouncements.length === 0 ? (
-            <div className="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-400">
+            <div className="bg-white p-8 rounded-2xl border border-[#E5EEF8] text-center text-slate-400 shadow-sm">
               暂无已发布的公告
             </div>
           ) : (
             visibleAnnouncements.slice().reverse().map(announcement => (
-              <div key={announcement.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm relative group hover:border-indigo-200 transition-colors">
+              <div key={announcement.id} className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm relative group hover:border-blue-100 hover:shadow-md transition-all duration-300">
                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                       {announcement.isSticky && <Pin size={16} className="text-orange-500 fill-current" />}
-                       <h4 className="font-bold text-gray-800">{announcement.title}</h4>
+                       {announcement.isSticky && <Pin size={14} className="text-rose-500 fill-current" />}
+                       <h4 className="font-extrabold text-slate-800 text-sm">{announcement.title}</h4>
                        {announcement.targetGroupId ? (
-                         <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1">
+                         <span className="bg-blue-50 text-[#1677FF] text-[10px] px-2 py-0.5 rounded-md border border-blue-100/50 flex items-center gap-1 font-bold">
                            <Users size={10} /> {announcement.targetGroupName}
                          </span>
                        ) : (
-                         <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded border border-gray-200 flex items-center gap-1">
+                         <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md border border-slate-200/50 flex items-center gap-1 font-bold">
                            <Globe size={10} /> 全员
                          </span>
                        )}
                     </div>
                     <button 
                       onClick={() => onDeleteAnnouncement(announcement.id)}
-                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                      className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-slate-50 rounded-lg"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                  </div>
-                 <p className="text-gray-600 text-sm mb-3 whitespace-pre-wrap">{announcement.content}</p>
-                 <div className="flex justify-between items-center text-xs text-gray-400 border-t border-gray-50 pt-3">
+                 <p className="text-slate-600 text-xs md:text-sm mb-3 whitespace-pre-wrap leading-relaxed">{announcement.content}</p>
+                 <div className="flex justify-between items-center text-xs text-slate-400 border-t border-slate-50 pt-3 font-medium">
                     <span>发布人: {announcement.authorName}</span>
                     <span>{announcement.date}</span>
                  </div>

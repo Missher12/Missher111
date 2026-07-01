@@ -61,7 +61,7 @@ const STATE_CONFIG: Record<AvailabilityState, { label: string; shortLabel: strin
     shortLabel: '缺', 
     bg: 'bg-white', 
     text: 'text-gray-300', 
-    border: 'border-gray-100',
+    border: 'border-[#E5EEF8]',
     icon: <Circle size={8} className="opacity-20" /> 
   },
   FULL: { 
@@ -492,7 +492,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
       {isProcessing && (
          <div className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
             <div className="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center animate-in zoom-in duration-200">
-               <Loader2 className="animate-spin text-indigo-600 mb-3" size={40} />
+               <Loader2 className="animate-spin text-[#1677FF] mb-3" size={40} />
                <p className="font-bold text-gray-700 text-lg">正在处理中...</p>
                <p className="text-gray-400 text-xs mt-1">请稍候，不要关闭窗口</p>
             </div>
@@ -500,7 +500,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
       )}
 
       {/* Primary Toolbar */}
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 flex flex-col gap-4">
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5EEF8] hover:shadow-md transition-all duration-300 flex flex-col gap-4">
          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             
             {/* Search */}
@@ -552,7 +552,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                           });
                              setIsEditModalOpen(true);
                           }}
-                          className="px-4 py-2.5 bg-[#00A2E8] text-white rounded-xl text-sm font-extrabold hover:bg-[#008ec7] transition-all flex items-center gap-2 shadow-sm shadow-sky-100"
+                          className="px-4 py-2.5 bg-[#1677FF] text-white rounded-xl text-sm font-extrabold hover:bg-[#0B5FCC] transition-all flex items-center gap-2 shadow-sm shadow-blue-100/20"
                        >
                           <Plus size={16} /> 录入
                        </button>
@@ -562,7 +562,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                         <button 
                             onClick={handlePromoteToStaff}
                             disabled={isProcessing}
-                            className="px-4 py-2.5 bg-sky-50 text-[#00A2E8] border border-sky-150/50 rounded-xl text-sm font-extrabold hover:bg-sky-100/60 transition-colors flex items-center gap-2 shadow-sm"
+                            className="px-4 py-2.5 bg-blue-50 text-[#1677FF] border border-blue-100/50 rounded-xl text-sm font-extrabold hover:bg-blue-100/60 transition-colors flex items-center gap-2 shadow-sm"
                         >
                             <UserPlus size={16} /> 入职选中 ({selectedRecordIds.size})
                         </button>
@@ -583,15 +583,15 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
       </div>
 
       {/* Main Table Container */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-sm border border-[#E5EEF8] hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-20 bg-slate-50/75 backdrop-blur-md shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-              <tr className="text-slate-500 text-xs uppercase border-b border-slate-100">
+              <tr className="text-slate-500 text-xs uppercase border-b border-[#E5EEF8]">
                 <th className="p-4 w-[50px] text-center font-bold bg-slate-50/50">
                    <input 
                      type="checkbox" 
-                     className="rounded text-[#00A2E8] focus:ring-[#00A2E8] cursor-pointer"
+                     className="rounded text-[#1677FF] focus:ring-[#1677FF] cursor-pointer"
                      onChange={toggleSelectAll} 
                      checked={selectedRecordIds.size > 0 && selectedRecordIds.size === displayRecords.length} 
                    />
@@ -604,7 +604,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                 
                 {/* Dynamic Date Headers */}
                 {dateHeaders.map(date => (
-                   <th key={date} className="p-2 w-[60px] text-center font-bold bg-indigo-50/30 border-l border-white">
+                   <th key={date} className="p-2 w-[60px] text-center font-bold bg-blue-50/40 border-l border-white text-xs">
                       {date}
                    </th>
                 ))}
@@ -627,12 +627,12 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                      try { availMap = JSON.parse(record.availability || '{}'); } catch(e) {}
 
                      return (
-                       <tr key={record.id} className={`transition-colors group ${selectedRecordIds.has(record.id) ? 'bg-indigo-50/30' : 'hover:bg-gray-50'}`}>
+                       <tr key={record.id} className={`transition-colors group ${selectedRecordIds.has(record.id) ? 'bg-blue-50/40' : 'hover:bg-slate-50/40'}`}>
                           {/* Checkbox */}
                           <td className="p-4 text-center align-middle">
                              <input 
                                type="checkbox" 
-                               className="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                               className="rounded text-[#1677FF] focus:ring-[#1677FF] cursor-pointer"
                                checked={selectedRecordIds.has(record.id)} 
                                onChange={() => toggleSelection(record.id)} 
                              />
@@ -655,7 +655,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                                    {record.phone && <span>📞 {shouldShowSensitive ? record.phone : maskPhone(record.phone)}</span>}
                                    {record.idCard && <span>🆔 {shouldShowSensitive ? record.idCard : maskIdCard(record.idCard)}</span>}
                                    {record.dob && <span>🎂 {record.dob}</span>}
-                                   {record.parsedEmail && <span className="text-indigo-600 truncate max-w-[200px]">📧 {record.parsedEmail}</span>}
+                                   {record.parsedEmail && <span className="text-[#1677FF] truncate max-w-[200px]">📧 {record.parsedEmail}</span>}
                                 </div>
                              </div>
                           </td>
@@ -696,7 +696,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                                     type="text" 
                                     value={record.managementNotes || ''}
                                     onChange={(e) => handleUpdateNote(record.id, e.target.value)}
-                                    className="w-full bg-transparent border-b border-transparent focus:border-indigo-400 outline-none text-gray-700 py-1 px-1 transition-all placeholder-gray-300 hover:border-gray-200 focus:bg-white text-center"
+                                    className="w-full bg-transparent border-b border-transparent focus:border-sky-300 text-slate-700 placeholder-slate-300 hover:border-slate-200 focus:bg-white text-center"
                                     placeholder="点击输入..."
                                   />
                                   <PenLine size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none opacity-0 group-hover/input:opacity-100" />
@@ -710,7 +710,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                              const stateKey = (availMap[date] as AvailabilityState) || 'EMPTY';
                              const config = STATE_CONFIG[stateKey] || STATE_CONFIG.EMPTY;
                              return (
-                               <td key={date} className="p-1 align-middle text-center border-l border-gray-50">
+                               <td key={date} className="p-1 align-middle text-center border-l border-[#E5EEF8]">
                                   <div 
                                     className={`w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all ${config.bg} ${config.text} ${viewSource === 'MAIN_LIST' ? 'cursor-pointer hover:scale-105 shadow-sm' : ''}`}
                                     onClick={() => {
@@ -762,7 +762,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
               <button onClick={() => setIsImportModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+            <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-sky-300 hover:bg-blue-50/40 transition-colors cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                  <UploadCloud size={32} className="text-blue-500" />
                </div>
@@ -773,13 +773,13 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
             <div className="mt-4 flex justify-center">
                 <button 
                   onClick={handleDownloadTemplate}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-medium bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-colors"
+                  className="text-xs text-[#1677FF] hover:text-[#0B5FCC] flex items-center gap-1 font-semibold bg-blue-50 px-3.5 py-2 rounded-xl border border-blue-100/50 transition-all duration-300 shadow-sm"
                 >
                    <FileDown size={14} /> 下载标准模板 (CSV)
                 </button>
             </div>
             
-            <div className="mt-6 bg-gray-50 p-4 rounded-lg text-xs text-gray-500 space-y-1 border border-gray-100">
+            <div className="mt-6 bg-gray-50 p-4 rounded-lg text-xs text-gray-500 space-y-1 border border-[#E5EEF8]">
                <p className="font-bold text-gray-700 mb-2">文件格式说明：</p>
                <p>• 必须包含：姓名、手机</p>
                <p>• 自动排班：包含日期的列 (如 5.1) 会自动识别。</p>
@@ -836,7 +836,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                         }
                         setIsEditModalOpen(false);
                      }}
-                     className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700"
+                     className="w-full bg-[#1677FF] text-white py-2.5 rounded-xl font-bold hover:bg-[#0B5FCC] transition-all shadow-sm shadow-blue-100/20"
                   >
                      保存
                   </button>

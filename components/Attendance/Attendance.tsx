@@ -195,7 +195,7 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
             <span>下班 {config.endTime}</span>
          </div>
          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-sky-400 to-[#00A2E8] transition-all duration-1000" style={{ width: `${getDayProgress()}%` }}></div>
+            <div className="h-full bg-gradient-to-r from-sky-400 to-[#1677FF] transition-all duration-1000" style={{ width: `${getDayProgress()}%` }}></div>
          </div>
       </div>
 
@@ -204,7 +204,7 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
           onClick={handleClockAction}
           disabled={loading || !!error}
           className={`w-full py-4 rounded-2xl font-black text-lg text-white shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group
-            ${status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#00A2E8] hover:bg-[#008ec7] shadow-sky-200'}`}
+            ${status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-sky-200'}`}
         >
           {loading ? <Clock className="animate-spin" size={24} /> : (
              <>

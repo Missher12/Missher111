@@ -4,11 +4,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>STAFFTool - HR Suite</title>
+    <title>STAFF SYSTEM - 现场调度 · 报名核销 · 考勤管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+      :root {
+        --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", Arial, sans-serif;
+      }
+      body, button, input, textarea, select {
+        font-family: var(--font-ui) !important;
+      }
+      body { background-color: #F4F7FC; }
+      
+      /* Ensure clean rounded zeroes without slashes across the UI */
+      .numeric-text, .table-number, .order-number, .phone-number, .stat-number, .date-number, .font-mono, span, p, h1, h2, h3, h4, td {
+        font-variant-numeric: lining-nums tabular-nums;
+        font-feature-settings: "zero" 0;
+      }
+      
       /* Custom scrollbar for cleaner look */
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }

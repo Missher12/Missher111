@@ -22,6 +22,8 @@ interface TrainingCheckinManagerProps {
   permissionSettings: PermissionSettings;
   session: UserSession | null;
   registrationConfig: RegistrationConfig;
+  activeSubTab?: 'DASHBOARD' | 'MASTER_LIST' | 'ONSITE';
+  onSubTabChange?: (tab: 'DASHBOARD' | 'MASTER_LIST' | 'ONSITE') => void;
 }
 
 const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
@@ -34,9 +36,14 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
   onBatchAddStaff,
   permissionSettings,
   session,
-  registrationConfig
+  registrationConfig,
+  activeSubTab,
+  onSubTabChange
 }) => {
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'MASTER_LIST' | 'ONSITE'>('DASHBOARD');
+  const [internalActiveTab, setInternalActiveTab] = useState<'DASHBOARD' | 'MASTER_LIST' | 'ONSITE'>('DASHBOARD');
+  
+  const activeTab = activeSubTab || internalActiveTab;
+  const setActiveTab = onSubTabChange || setInternalActiveTab;
 
   // STRICT PERMISSION: Only ADMIN sees Master List & On-Site Registration.
   const isAdmin = session?.role === 'ADMIN';
@@ -97,7 +104,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
     };
   }, [queue, registrationList, onSiteRecords, staffList]);
 
-  const COLORS = ['#00A2E8', '#f43f5e', '#64748b'];
+  const COLORS = ['#1677FF', '#f43f5e', '#64748b'];
 
   // Construct tabs dynamically
   const tabs = [
@@ -116,7 +123,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
     <div className="space-y-4 md:space-y-6 animate-fade-in pb-20">
       
       {/* Tab Navigation */}
-      <div className="bg-white p-2 md:p-2.5 rounded-2xl shadow-sm border border-slate-100">
+      <div className="bg-white p-2 md:p-2.5 rounded-2xl shadow-sm border border-[#E5EEF8]">
          <div className="flex p-1 bg-slate-50 rounded-xl overflow-x-auto w-full no-scrollbar">
             {tabs.map(tab => (
               <button
@@ -124,7 +131,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
-                    ? 'bg-white text-[#00A2E8] shadow-sm' 
+                    ? 'bg-white text-[#1677FF] shadow-sm' 
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
                 }`}
               >
@@ -138,7 +145,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
       {activeTab === 'DASHBOARD' && (
         <div className="space-y-4 md:space-y-6">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+              <div className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                  <div className="flex justify-between items-start mb-2">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">已签到人数</p>
                     <div className="p-2.5 bg-green-50 text-green-600 rounded-xl"><UserCheckIcon size={16} /></div>
@@ -148,10 +155,10 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
               </div>
               
               {showOnSite && (
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+                <div className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                    <div className="flex justify-between items-start mb-2">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">现场报名</p>
-                      <div className="p-2.5 bg-sky-50 text-[#00A2E8] rounded-xl"><UserPlus size={16} /></div>
+                      <div className="p-2.5 bg-blue-50 text-[#1677FF] rounded-xl"><UserPlus size={16} /></div>
                    </div>
                    <h3 className="text-3xl font-black text-slate-800">{onSiteRecords.length}</h3>
                    <p className="text-xs text-slate-500 mt-1 font-semibold">今日新增录入</p>
@@ -159,16 +166,16 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
               )}
 
               {showMasterList && (
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+                <div className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                    <div className="flex justify-between items-start mb-2">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">总名单人数</p>
-                      <div className="p-2 bg-sky-50 text-[#00A2E8] rounded-lg"><ClipboardList size={16} /></div>
+                      <div className="p-2 bg-blue-50 text-[#1677FF] rounded-lg"><ClipboardList size={16} /></div>
                    </div>
                    <h3 className="text-3xl font-black text-slate-800">{registrationList.length}</h3>
                    <p className="text-xs text-slate-500 mt-1 font-semibold">包含所有渠道数据</p>
                 </div>
               )}
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+              <div className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                  <div className="flex justify-between items-start mb-2">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">待签到</p>
                     <div className="p-2.5 bg-orange-50 text-orange-600 rounded-xl"><TrendingUp size={16} /></div>
@@ -180,7 +187,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
 
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Gender Chart */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+              <div className="bg-white p-6 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                  <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
                     <PieChart size={18} className="text-pink-500" /> 签到人员性别分布
                  </h3>
@@ -215,9 +222,9 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
               </div>
 
               {/* Timeline Chart */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+              <div className="bg-white p-6 rounded-2xl border border-[#E5EEF8] shadow-sm hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
                  <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                    <BarChart3 size={18} className="text-[#00A2E8]" /> 签到时间段分布
+                    <BarChart3 size={18} className="text-[#1677FF]" /> 签到时间段分布
                  </h3>
                  <div className="h-64">
                     {dashboardStats.timelineChartData.length > 0 ? (
@@ -227,7 +234,7 @@ const TrainingCheckinManager: React.FC<TrainingCheckinManagerProps> = ({
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
                             <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#9ca3af'}} />
                             <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}} />
-                            <Bar dataKey="count" fill="#00A2E8" radius={[4, 4, 0, 0]} barSize={20} />
+                            <Bar dataKey="count" fill="#1677FF" radius={[4, 4, 0, 0]} barSize={20} />
                           </BarChart>
                       </ResponsiveContainer>
                     ) : (

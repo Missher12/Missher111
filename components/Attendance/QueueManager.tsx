@@ -327,7 +327,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                   <p className="text-slate-400 text-sm mb-6">点击下方按钮启动摄像头</p>
                   <button 
                     onClick={() => setIsCameraActive(true)}
-                    className="px-6 py-3 bg-[#00A2E8] text-white rounded-full font-bold hover:bg-[#008ec7] transition-all shadow-lg shadow-sky-900/20 flex items-center gap-2"
+                    className="px-6 py-3 bg-[#1677FF] text-white rounded-full font-bold hover:bg-[#0B5FCC] transition-all shadow-lg shadow-sky-900/20 flex items-center gap-2"
                   >
                      <Zap size={16} fill="currentColor" /> 启动扫描
                   </button>
@@ -341,12 +341,12 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                   {/* Viewfinder Overlay */}
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                      <div className="w-64 h-64 border-2 border-white/30 rounded-3xl relative">
-                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#00A2E8] rounded-tl-xl -mt-1 -ml-1"></div>
-                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#00A2E8] rounded-tr-xl -mt-1 -mr-1"></div>
-                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#00A2E8] rounded-bl-xl -mb-1 -ml-1"></div>
-                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#00A2E8] rounded-br-xl -mb-1 -mr-1"></div>
+                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#1677FF] rounded-tl-xl -mt-1 -ml-1"></div>
+                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#1677FF] rounded-tr-xl -mt-1 -mr-1"></div>
+                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#1677FF] rounded-bl-xl -mb-1 -ml-1"></div>
+                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#1677FF] rounded-br-xl -mb-1 -mr-1"></div>
                         {/* Scanning Laser */}
-                        <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-[#00A2E8] shadow-[0_0_15px_rgba(0,162,232,0.8)] animate-[scan_1.5s_ease-in-out_infinite]"></div>
+                        <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-[#1677FF] shadow-[0_0_15px_rgba(0,162,232,0.8)] animate-[scan_1.5s_ease-in-out_infinite]"></div>
                      </div>
                   </div>
 
@@ -365,7 +365,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                            </div>
                            <h2 className="text-lg font-bold text-gray-900 mb-1">{scanResult.title}</h2>
                            {scanResult.record && (
-                              <div className="bg-gray-50 rounded-lg p-2 mb-2 border border-gray-100">
+                              <div className="bg-gray-50 rounded-lg p-2 mb-2 border border-[#E5EEF8]">
                                  <p className="font-bold text-gray-800 text-lg">{scanResult.record.name}</p>
                                  <p className="text-xs text-gray-500">{scanResult.record.registrationNumber}</p>
                               </div>
@@ -388,9 +388,9 @@ const QueueManager: React.FC<QueueManagerProps> = ({
          {/* 2. Last Scanned Widget & Stats */}
          <div className="space-y-4">
             {lastScanned?.record ? (
-               <div className="bg-white p-4 rounded-xl border border-sky-100 shadow-sm flex items-center gap-4 relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#00A2E8]"></div>
-                  <div className="w-12 h-12 bg-sky-50 rounded-full flex items-center justify-center text-[#00A2E8] font-bold text-lg shrink-0">
+               <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex items-center gap-4 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1677FF]"></div>
+                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-[#1677FF] font-bold text-lg shrink-0">
                      {lastScanned.record.name[0]}
                   </div>
                   <div>
@@ -427,12 +427,12 @@ const QueueManager: React.FC<QueueManagerProps> = ({
       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col overflow-hidden min-h-0">
          
          {/* Toolbar */}
-         <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-4 bg-white shrink-0">
+         <div className="p-4 border-b border-[#E5EEF8] flex flex-col sm:flex-row justify-between gap-4 bg-white shrink-0">
             <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
                <button 
                  onClick={() => setActiveTab('PENDING')}
                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-                   activeTab === 'PENDING' ? 'bg-white text-[#00A2E8] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                   activeTab === 'PENDING' ? 'bg-white text-[#1677FF] shadow-sm' : 'text-gray-500 hover:text-gray-700'
                  }`}
                >
                  <UserX size={16} /> 待签到
@@ -474,7 +474,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                      {displayPending.map(record => (
                        <div key={record.id} className="bg-white p-4 rounded-xl border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all flex justify-between items-center group">
                           <div className="flex items-center gap-3 overflow-hidden">
-                             <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm group-hover:bg-sky-50 group-hover:text-[#00A2E8] transition-colors shrink-0">
+                             <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm group-hover:bg-blue-50 group-hover:text-[#1677FF] transition-colors shrink-0">
                                 {record.name[0]}
                              </div>
                              <div className="min-w-0">
@@ -489,7 +489,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
                           </div>
                           <button 
                             onClick={() => handleManualCheckIn(record)}
-                            className="px-4 py-2 bg-sky-50 text-[#00A2E8] rounded-lg text-xs font-bold hover:bg-[#00A2E8] hover:text-white transition-all whitespace-nowrap"
+                            className="px-4 py-2 bg-blue-50 text-[#1677FF] rounded-lg text-xs font-bold hover:bg-[#1677FF] hover:text-white transition-all whitespace-nowrap"
                           >
                             签到
                           </button>

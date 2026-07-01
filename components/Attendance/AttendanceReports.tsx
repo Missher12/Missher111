@@ -248,7 +248,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
     const icon = type === 'IN' ? <ArrowRight size={16} /> : <ArrowLeft size={16} />;
     
     return (
-      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+      <div className="bg-gray-50 p-4 rounded-xl border border-[#E5EEF8]">
         <p className={`text-xs font-bold uppercase mb-2 flex items-center gap-1 ${type === 'IN' ? 'text-green-600' : 'text-orange-600'}`}>
           {icon} {title}
         </p>
@@ -292,9 +292,9 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
     <div className="space-y-6 animate-fade-in pb-20">
       
       {/* 1. Header Toolbar */}
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100/80 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-20 hover:shadow-md transition-all duration-300">
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5EEF8]/80 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-20 hover:shadow-md transition-all duration-300">
          <div className="flex items-center gap-2.5 w-full md:w-auto">
-            <div className="p-2.5 bg-sky-50 rounded-xl text-[#00A2E8]">
+            <div className="p-2.5 bg-blue-50 rounded-xl text-[#1677FF]">
                <BarChart3 size={20} />
             </div>
             <div>
@@ -336,14 +336,14 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
             <div className="flex bg-slate-100/80 p-1 rounded-xl">
                <button 
                  onClick={() => setViewMode('GRID')}
-                 className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-white text-[#00A2E8] shadow-sm border border-slate-200/40' : 'text-slate-400 hover:text-slate-600'}`}
+                 className={`p-1.5 rounded-lg transition-all ${viewMode === 'GRID' ? 'bg-white text-[#1677FF] shadow-sm border border-slate-200/40' : 'text-slate-400 hover:text-slate-600'}`}
                  title="网格视图"
                >
                   <LayoutGrid size={16} />
                </button>
                <button 
                  onClick={() => setViewMode('TABLE')}
-                 className={`p-1.5 rounded-lg transition-all ${viewMode === 'TABLE' ? 'bg-white text-[#00A2E8] shadow-sm border border-slate-200/40' : 'text-slate-400 hover:text-slate-600'}`}
+                 className={`p-1.5 rounded-lg transition-all ${viewMode === 'TABLE' ? 'bg-white text-[#1677FF] shadow-sm border border-slate-200/40' : 'text-slate-400 hover:text-slate-600'}`}
                  title="列表视图"
                >
                   <List size={16} />
@@ -353,7 +353,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
             {canExport && (
               <button 
                  onClick={handleExport}
-                 className="bg-[#00A2E8] hover:bg-[#008ec7] text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm shadow-sky-100 transition-all"
+                 className="bg-[#1677FF] hover:bg-[#0B5FCC] text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm shadow-blue-100/20 transition-all"
               >
                  <Download size={16} /> <span className="hidden sm:inline">导出</span>
               </button>
@@ -363,7 +363,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
 
       {/* 2. Stats Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-28 relative overflow-hidden hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5EEF8] flex flex-col justify-between h-28 relative overflow-hidden hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
             <div className="flex justify-between items-start z-10">
                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">出勤率</span>
                <div className={`p-1.5 rounded-full ${dailyStats.rate >= 90 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -374,12 +374,12 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                <h3 className="text-3xl font-black text-slate-800">{dailyStats.rate}%</h3>
                <p className="text-xs text-slate-500 mt-1 font-semibold">实到 {dailyStats.present} / 应到 {dailyStats.total}</p>
             </div>
-            <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-4 translate-y-4 text-[#00A2E8]">
+            <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-4 translate-y-4 text-[#1677FF]">
                <BarChart3 size={80} />
             </div>
          </div>
 
-         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-28 hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5EEF8] flex flex-col justify-between h-28 hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
             <div className="flex justify-between items-start">
                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">迟到人数</span>
                <div className="p-1.5 rounded-full bg-orange-50 text-orange-600"><Clock size={16} /></div>
@@ -390,7 +390,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
             </div>
          </div>
 
-         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-28 hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+         <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#E5EEF8] flex flex-col justify-between h-28 hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
             <div className="flex justify-between items-start">
                <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">缺勤人数</span>
                <div className="p-1.5 rounded-full bg-rose-50 text-rose-600"><AlertCircle size={16} /></div>
@@ -401,18 +401,18 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
             </div>
          </div>
 
-         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 h-28 hidden md:block hover:shadow-md hover:border-sky-100/60 transition-all duration-300">
+         <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#E5EEF8] h-28 hidden md:block hover:shadow-md hover:border-blue-100/60 transition-all duration-300">
             <p className="text-xs text-slate-400 font-bold mb-2">近7天趋势</p>
             <div className="h-16 w-full">
                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart data={trendData}>
                      <defs>
                         <linearGradient id="colorPresentMini" x1="0" y1="0" x2="0" y2="1">
-                           <stop offset="5%" stopColor="#00A2E8" stopOpacity={0.3}/>
-                           <stop offset="95%" stopColor="#00A2E8" stopOpacity={0}/>
+                           <stop offset="5%" stopColor="#1677FF" stopOpacity={0.3}/>
+                           <stop offset="95%" stopColor="#1677FF" stopOpacity={0}/>
                         </linearGradient>
                      </defs>
-                     <Area type="monotone" dataKey="present" stroke="#00A2E8" strokeWidth={2} fill="url(#colorPresentMini)" />
+                     <Area type="monotone" dataKey="present" stroke="#1677FF" strokeWidth={2} fill="url(#colorPresentMini)" />
                   </AreaChart>
                </ResponsiveContainer>
             </div>
@@ -422,7 +422,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
       {/* ... Rest of the file unchanged ... */}
       <div>
          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Users size={20} className="text-[#00A2E8]" /> 
+            <Users size={20} className="text-[#1677FF]" /> 
             {selectedDate === todayStr ? '今日' : selectedDate} 考勤明细
          </h3>
 
@@ -440,7 +440,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                         className={`bg-white p-5 rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition-all group relative overflow-hidden flex flex-col justify-between h-full ${
                            record 
                               ? (record.status === 'NORMAL' ? 'border-green-100 hover:border-green-200' : 'border-orange-100 hover:border-orange-200')
-                              : 'border-gray-100 opacity-90'
+                              : 'border-[#E5EEF8] opacity-90'
                         }`}
                      >
                         <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
@@ -470,7 +470,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                               )}
                            </div>
                            
-                           <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between items-center">
+                           <div className="mt-auto pt-3 border-t border-[#E5EEF8] flex justify-between items-center">
                               <span className={`text-[10px] px-2 py-0.5 rounded border truncate max-w-[120px] ${isLeader ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
                                  {roleText}
                               </span>
@@ -537,7 +537,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                               <td className="p-3 text-right pr-4">
                                  <button 
                                     onClick={() => setSelectedStaff(staff)}
-                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-bold bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
+                                    className="text-[#1677FF] hover:text-[#0B5FCC] text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-xl hover:bg-blue-100/50 transition-all duration-300 shadow-sm"
                                  >
                                     查看详情
                                  </button>
@@ -598,7 +598,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                      </div>
                      <div className="flex gap-2 pt-2">
                        <button onClick={() => setIsEditing(false)} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">取消</button>
-                       <button onClick={handleSaveEdits} className="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">保存</button>
+                       <button onClick={handleSaveEdits} className="flex-1 py-2.5 bg-[#1677FF] text-white rounded-xl font-bold hover:bg-[#0B5FCC] transition-all duration-300 shadow-sm shadow-blue-100/20">保存</button>
                      </div>
                    </div>
                  ) : (
@@ -607,8 +607,8 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
                       {renderRecordBlock(outRecord, 'OUT')}
                       
                       {(session?.role === 'ADMIN') && (
-                        <div className="pt-4 border-t border-gray-100">
-                           <button onClick={() => setIsEditing(true)} className="w-full py-2.5 bg-indigo-50 text-indigo-700 text-sm font-bold rounded-lg hover:bg-indigo-100 border border-indigo-100 flex items-center justify-center gap-2">
+                        <div className="pt-4 border-t border-[#E5EEF8]">
+                           <button onClick={() => setIsEditing(true)} className="w-full py-2.5 bg-blue-50 text-[#1677FF] text-sm font-extrabold rounded-xl hover:bg-blue-100/60 border border-blue-100/50 flex items-center justify-center gap-2 transition-all duration-300 shadow-sm">
                               <Edit2 size={16} /> 编辑 / 补卡
                            </button>
                         </div>
