@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Globe, Check, Server, Clock, Shield, Users, Plus, Trash2, Lock, User, Layout, Image as ImageIcon, Hash, Key, X } from 'lucide-react';
 import { AttendanceConfig, PermissionSettings, AdminUser, LoginConfig, RegistrationConfig } from '../../types';
+import { Toast } from '../ui/Kit';
 
 interface SystemSettingsProps {
   onSave: (settings: { domain: string; attendance: AttendanceConfig; permissions: PermissionSettings; loginConfig: LoginConfig; registrationConfig: RegistrationConfig }) => void;
@@ -66,6 +67,8 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
   // Password Change Modal State
   const [passwordEditUser, setPasswordEditUser] = useState<string | null>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('error');
 
   const handleSave = () => {
     let cleanDomain = domain.trim();
@@ -89,9 +92,15 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
       const success = onAddAdmin(newAdmin);
       if (success) {
         setNewAdmin({ username: '', password: '' });
+        setToastType('success');
+        setToastMsg('成功添加管理员账号');
+      } else {
+        setToastType('error');
+        setToastMsg('添加管理员账号失败，可能用户名已存在');
       }
     } else {
-      alert('请输入用户名和密码');
+      setToastType('error');
+      setToastMsg('请输入用户名和密码');
     }
   };
 
@@ -100,8 +109,11 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
       onUpdateAdminPassword(passwordEditUser, newPasswordInput);
       setPasswordEditUser(null);
       setNewPasswordInput('');
+      setToastType('success');
+      setToastMsg('密码修改成功');
     } else {
-      alert('请输入新密码');
+      setToastType('error');
+      setToastMsg('请输入新密码');
     }
   };
 
@@ -540,6 +552,13 @@ const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
         </div>
+      )}
+      {toastMsg && (
+        <Toast 
+          message={toastMsg} 
+          type={toastType} 
+          onClose={() => setToastMsg(null)} 
+        />
       )}
     </div>
   );

@@ -14,7 +14,8 @@ interface AttendanceProps {
 const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, config }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -27,6 +28,7 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
 
   const startCamera = async () => {
     try {
+      setIsCameraReady(false);
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
               facingMode: { ideal: 'user' },
@@ -34,23 +36,28 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
               height: { ideal: 720 }
           } 
       });
-      setStream(mediaStream);
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
       }
       setError('');
     } catch (err) {
       console.error("Error accessing camera:", err);
       setError('无法访问摄像头，请检查权限。');
+      setIsCameraReady(false);
     }
   };
 
   const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-  }, [stream]);
+    setIsCameraReady(false);
+  }, []);
 
   useEffect(() => {
     startCamera();
@@ -61,10 +68,10 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
   }, []); 
 
   useEffect(() => {
-    if (videoRef.current && stream && !videoRef.current.srcObject) {
-      videoRef.current.srcObject = stream;
+    if (videoRef.current && streamRef.current && !videoRef.current.srcObject) {
+      videoRef.current.srcObject = streamRef.current;
     }
-  }, [stream, status]);
+  }, [status]);
 
   // Capture Photo - Returns both DataURL (for preview) and Blob (for upload)
   const capturePhotoData = (): Promise<{ dataUrl: string; blob: Blob } | null> => {
@@ -162,8 +169,10 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
           <>
             <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1] opacity-90 group-hover:opacity-100 transition-opacity" />
             <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2">
-               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-               <span className="text-[10px] font-medium text-white tracking-wider">摄像头就绪</span>
+               <div className={`w-2 h-2 ${isCameraReady ? 'bg-green-400' : 'bg-amber-400 animate-pulse'} rounded-full`}></div>
+               <span className="text-[10px] font-medium text-white tracking-wider">
+                  {isCameraReady ? '摄像头就绪' : '摄像头连接中...'}
+               </span>
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                <div>
@@ -202,7 +211,7 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
       <div className="mt-4">
         <button
           onClick={handleClockAction}
-          disabled={loading || !!error}
+          disabled={loading || !isCameraReady || !!error}
           className={`w-full py-4 rounded-2xl font-black text-lg text-white shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group
             ${status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-sky-200'}`}
         >

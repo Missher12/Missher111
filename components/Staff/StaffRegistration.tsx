@@ -36,6 +36,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { maskPhone, maskIdCard } from '../../utils';
+import { ConfirmDialog, Toast } from '../ui/Kit';
 
 interface StaffRegistrationProps {
   records: RegistrationRecord[];
@@ -117,6 +118,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
   onUpdateRecords, 
   onBatchAddStaff,
   permissionSettings,
+  displayMode = 'MASTER',
   allowExcelImport = true,
   allowManualEntry = true,
   idPrefix = '' // Default empty
@@ -136,6 +138,35 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
   
   // Processing Animation State
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('error');
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'primary' | 'warning';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const triggerConfirm = (title: string, message: string, onConfirm: () => void, variant: 'danger' | 'primary' | 'warning' = 'primary') => {
+    setConfirmState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
 
   // Helper for ID generation with prefix
   const generateId = (offset: number) => {
@@ -218,52 +249,73 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
     onUpdateRecords(updated);
   };
 
-  const handlePromoteToStaff = async () => {
+  const handlePromoteToStaff = () => {
     if (selectedRecordIds.size === 0) {
-       alert("请先勾选需要导入的人员");
+       setToastType('error');
+       setToastMsg("请先勾选需要导入的人员");
        return;
     }
 
-    if (confirm(`确定将选中的 ${selectedRecordIds.size} 名人员入职到员工库吗？`)) {
-       setIsProcessing(true);
-       await new Promise(resolve => setTimeout(resolve, 800)); // Animation
+    triggerConfirm(
+       '入职员工库',
+       `确定将选中的 ${selectedRecordIds.size} 名人员入职到员工库吗？`,
+       async () => {
+          setIsProcessing(true);
+          await new Promise(resolve => setTimeout(resolve, 800)); // Animation
 
-       const newStaffList: Staff[] = [];
-       
-       displayRecords
-         .filter(r => selectedRecordIds.has(r.id))
-         .forEach(rec => {
-            if (rec.name && (rec.idCard || rec.phone)) {
-               newStaffList.push({
-                  id: rec.id || crypto.randomUUID(),
-                  name: rec.name,
-                  idCard: rec.idCard || rec.phone || '', 
-                  phone: rec.phone || '',
-                  avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rec.name}`,
-                  status: 'ACTIVE',
-                  roles: [],
-                  joinDate: new Date().toISOString().split('T')[0],
-                  isTalent: false
-               });
-            }
-         });
+          const newStaffList: Staff[] = [];
+          
+          displayRecords
+            .filter(r => selectedRecordIds.has(r.id))
+            .forEach(rec => {
+               if (rec.name && (rec.idCard || rec.phone)) {
+                  newStaffList.push({
+                     id: rec.id || crypto.randomUUID(),
+                     name: rec.name,
+                     idCard: rec.idCard || rec.phone || '', 
+                     phone: rec.phone || '',
+                     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rec.name}`,
+                     status: 'ACTIVE',
+                     roles: [],
+                     joinDate: new Date().toISOString().split('T')[0],
+                     isTalent: false
+                  });
+               }
+            });
 
-       onBatchAddStaff(newStaffList);
-       setSelectedRecordIds(new Set());
-       setIsProcessing(false);
-    }
+          onBatchAddStaff(newStaffList);
+          setSelectedRecordIds(new Set());
+          setIsProcessing(false);
+          setToastType('success');
+          setToastMsg(`成功将 ${newStaffList.length} 名人员入职到员工库`);
+       }
+    );
   };
 
   const handleDeleteRecord = (id: string) => {
-    if (confirm('确定要删除这条记录吗？')) {
-      onUpdateRecords(records.filter(r => r.id !== id));
-    }
+    triggerConfirm(
+      '删除记录',
+      '确定要删除这条记录吗？',
+      () => {
+        onUpdateRecords(records.filter(r => r.id !== id));
+        setToastType('success');
+        setToastMsg('成功删除记录');
+      },
+      'danger'
+    );
   };
 
   const handleClearAll = () => {
-    if (confirm('警告：确定要清空当前列表的所有记录吗？此操作不可恢复。')) {
-      onUpdateRecords([]);
-    }
+    triggerConfirm(
+      '清空名单',
+      '警告：确定要清空当前列表的所有记录吗？此操作不可恢复。',
+      () => {
+        onUpdateRecords([]);
+        setToastType('success');
+        setToastMsg('名单已成功清空');
+      },
+      'danger'
+    );
   };
 
   const toggleSelection = (id: string) => {
@@ -382,7 +434,8 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
     // Basic CSV Parsing logic (Comma or Tab)
     const rows = content.split(/\r?\n/).filter(r => r.trim() !== '');
     if (rows.length < 2) {
-        alert('文件内容过少，请确保包含标题行和数据行');
+        setToastType('error');
+        setToastMsg('文件内容过少，请确保包含标题行和数据行');
         return;
     }
 
@@ -404,7 +457,8 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
     };
 
     if (idx.name === -1) {
-        alert('解析失败：未找到“姓名”列。请下载模板并使用 UTF-8 编码格式。');
+        setToastType('error');
+        setToastMsg('解析失败：未找到“姓名”列。请下载模板并使用 UTF-8 编码格式。');
         return;
     }
 
@@ -478,9 +532,11 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
 
     if (newRecords.length > 0) {
         onUpdateRecords([...records, ...newRecords]);
-        alert(`成功导入 ${newRecords.length} 条记录`);
+        setToastType('success');
+        setToastMsg(`成功导入 ${newRecords.length} 条记录`);
     } else {
-        alert('未能解析出有效数据。如果是Excel文件，请另存为 "CSV UTF-8 (逗号分隔)" 格式后再上传。');
+        setToastType('error');
+        setToastMsg('未能解析出有效数据。如果是Excel文件，请另存为 "CSV UTF-8 (逗号分隔)" 格式后再上传。');
     }
   };
   
@@ -690,7 +746,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                           </td>
                           {/* Admin Notes */}
                           <td className="p-2 align-middle text-sm text-center">
-                             {viewSource === 'MAIN_LIST' ? (
+                             {displayMode === 'MASTER' ? (
                                <div className="relative group/input w-full flex justify-center">
                                   <input 
                                     type="text" 
@@ -712,9 +768,9 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
                              return (
                                <td key={date} className="p-1 align-middle text-center border-l border-[#E5EEF8]">
                                   <div 
-                                    className={`w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all ${config.bg} ${config.text} ${viewSource === 'MAIN_LIST' ? 'cursor-pointer hover:scale-105 shadow-sm' : ''}`}
+                                    className={`w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all ${config.bg} ${config.text} ${displayMode === 'MASTER' ? 'cursor-pointer hover:scale-105 shadow-sm' : ''}`}
                                     onClick={() => {
-                                       if(viewSource === 'MAIN_LIST') {
+                                       if(displayMode === 'MASTER') {
                                           const nextIndex = (AVAILABILITY_STATES.indexOf(stateKey) + 1) % AVAILABILITY_STATES.length;
                                           const nextState = AVAILABILITY_STATES[nextIndex];
                                           const newMap = { ...availMap, [date]: nextState };
@@ -844,6 +900,21 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
             </div>
          </div>
       )}
+      {toastMsg && (
+         <Toast 
+            message={toastMsg} 
+            type={toastType} 
+            onClose={() => setToastMsg(null)} 
+         />
+      )}
+      <ConfirmDialog
+         isOpen={confirmState.isOpen}
+         title={confirmState.title}
+         message={confirmState.message}
+         variant={confirmState.variant}
+         onConfirm={confirmState.onConfirm}
+         onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

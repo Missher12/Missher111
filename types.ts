@@ -38,6 +38,7 @@ export interface Staff {
   isTalent?: boolean;
   talentNotes?: string;
   registrationNumber?: string; // New: Display ID from the master table
+  isCheckInOperator?: boolean; // New: Configurable check-in operator permission
 }
 
 export interface AttendanceConfig {

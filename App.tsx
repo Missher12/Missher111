@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, BarChart3, Menu, X, LogOut, Megaphone, Briefcase, Settings, ScanLine, FileText, Home, ClipboardCheck, Play, Users, UserPlus, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Menu, X, LogOut, Megaphone, Briefcase, Settings, ScanLine, FileText, Home, ClipboardCheck, Play, Users, UserPlus, ClipboardList, AlertCircle } from 'lucide-react';
 
 import Dashboard from './components/Dashboard/Dashboard';
 import StaffDashboard from './components/Staff/StaffDashboard'; 
@@ -26,6 +26,14 @@ const MOCK_GROUPS: Group[] = [
   { id: 'g_service_center', name: '服务中心', description: '核心服务与支持团队' },
   { id: 'g_out', name: '编外机动组', description: '负责临时性支援任务' },
 ];
+
+export const canUseCheckIn = (session: UserSession | null, permissionSettings: PermissionSettings): boolean => {
+  if (!permissionSettings.enableCheckIn) return false;
+  if (!session) return false;
+  if (session.role === 'ADMIN') return true;
+  if (session.role === 'USER' && session.staff?.isCheckInOperator) return true;
+  return false;
+};
 
 const App: React.FC = () => {
   // --- Global State ---
@@ -64,6 +72,14 @@ const App: React.FC = () => {
     enableCandidateLogin: true 
   });
   const [registrationConfig, setRegistrationConfig] = useState<RegistrationConfig>({ masterPrefix: 'M', onSitePrefix: 'S' });
+
+  // --- Check-in Access Control Guard ---
+  useEffect(() => {
+    if (isLoading) return;
+    if (activeTab === 'checkin_system' && !canUseCheckIn(session, permissionSettings)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, session, permissionSettings, isLoading]);
 
   // --- Initialization ---
   useEffect(() => {
@@ -289,21 +305,6 @@ const App: React.FC = () => {
       checkInTime: new Date().toISOString()
     };
     setQueueData(prev => [...prev, newTicket]);
-    
-    // Auto-generate Attendance Record
-    const photoUrl = 'avatar' in person ? person.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.id}`;
-    const now = new Date();
-    const status = calculateAttendanceStatus('IN', now, attendanceConfig);
-
-    const newRecord: AttendanceRecord = {
-      id: crypto.randomUUID(),
-      staffId: person.id,
-      timestamp: now.toISOString(),
-      type: 'IN',
-      photoUrl: photoUrl,
-      status: status
-    };
-    setAttendanceRecords(prev => [...prev, newRecord]);
   };
 
   const updateTicketStatus = (ticketId: string, status: QueueTicket['status']) => {
@@ -406,6 +407,17 @@ const App: React.FC = () => {
         />;
       
       case 'checkin_system':
+        if (!canUseCheckIn(session, permissionSettings)) {
+          return (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-[#E5EEF8] shadow-sm max-w-md mx-auto mt-20">
+              <div className="p-3 bg-rose-50 text-rose-500 rounded-full mb-4">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 mb-2">现场签到功能暂未开启</h3>
+              <p className="text-xs text-slate-500 text-center leading-relaxed">该功能已被系统管理员关闭，或您未被授权为“签到操作员”。如有疑问，请联系现场负责人。</p>
+            </div>
+          );
+        }
         return <CheckInSystem 
           queue={queueData}
           registrationList={registrationList}
@@ -471,7 +483,7 @@ const App: React.FC = () => {
   }
 
   const isLeader = session?.role === 'USER' && session.staff?.roles.some(r => r.isLeader);
-  const canScanCheckIn = permissionSettings.enableCheckIn && session?.role === 'USER' && session.staff?.roles.some(r => r.groupId === 'g_out' || r.groupId === 'g_service_center');
+  const canScanCheckIn = canUseCheckIn(session, permissionSettings);
   const isFullScreen = activeTab === 'interviewee_dashboard';
 
   // Build the Sidebar Sections grouping

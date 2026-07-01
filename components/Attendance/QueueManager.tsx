@@ -20,6 +20,7 @@ import {
   History
 } from 'lucide-react';
 import jsQR from 'jsqr';
+import { ConfirmDialog } from '../ui/Kit';
 
 interface QueueManagerProps {
   pendingStaff: Staff[]; 
@@ -47,6 +48,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
   // UI State
   const [activeTab, setActiveTab] = useState<'PENDING' | 'CHECKED'>('PENDING');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   
   // Scanner State
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -291,9 +293,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
 
   const handleResetData = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if(window.confirm('确定清空所有签到记录吗？此操作无法撤销。')) {
-        if (onClearQueue) onClearQueue();
-    }
+    setIsConfirmOpen(true);
   };
 
   return (
@@ -542,6 +542,19 @@ const QueueManager: React.FC<QueueManagerProps> = ({
             )}
          </div>
       </div>
+      
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="重置今日签到"
+        message="确定清空今日的所有签到记录吗？此操作无法撤销。"
+        variant="danger"
+        confirmText="重置"
+        onConfirm={() => {
+          if (onClearQueue) onClearQueue();
+          setIsConfirmOpen(false);
+        }}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </div>
   );
 };

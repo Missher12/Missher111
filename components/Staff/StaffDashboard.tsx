@@ -58,21 +58,21 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
 
       {/* Stats Widgets */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-[14px] border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
               <span className="text-[10px] font-bold text-slate-400 uppercase">今日日期</span>
               <CalendarDays size={16} className="text-[#1677FF]" />
            </div>
            <p className="font-bold text-[#102A43] text-sm">{currentDate}</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-[14px] border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
               <span className="text-[10px] font-bold text-slate-400 uppercase">班次时间</span>
               <Clock size={16} className="text-orange-500" />
            </div>
            <p className="font-bold text-[#102A43] text-sm font-mono">{attendanceConfig.startTime} - {attendanceConfig.endTime}</p>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
+        <div className="bg-white p-4 rounded-[14px] border border-[#E5EEF8] shadow-sm flex flex-col justify-between h-24">
            <div className="flex justify-between items-start">
               <span className="text-[10px] font-bold text-slate-400 uppercase">当前状态</span>
               <Zap size={16} className={attendanceStatus === 'CLOCKED_IN' ? "text-green-500" : "text-slate-300"} />
@@ -81,12 +81,12 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
               {attendanceStatus === 'CLOCKED_IN' ? '工作中' : '休息中'}
            </p>
         </div>
-        <div className="bg-gradient-to-br from-[#1677FF] to-[#0B5FCC] p-4 rounded-2xl shadow-sm text-white flex flex-col justify-between h-24 border border-[#1677FF]/10">
-           <div className="flex justify-between items-start opacity-80">
-              <span className="text-[10px] font-bold uppercase text-blue-100">天气</span>
-              <Sun size={16} />
+        <div className="bg-gradient-to-br from-[#1677FF] to-[#0B5FCC] p-4 rounded-[14px] shadow-sm text-white flex flex-col justify-between h-24 border border-[#1677FF]/10">
+           <div className="flex justify-between items-start opacity-85">
+              <span className="text-[10px] font-bold uppercase text-blue-100">今日打卡</span>
+              <Footprints size={16} />
            </div>
-           <p className="font-bold text-sm text-white">晴朗 26°C</p>
+           <p className="font-bold text-sm text-white">{punchCount} 次记录</p>
         </div>
       </div>
 
@@ -94,13 +94,13 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
           
           {/* Main Attendance Area */}
           <div className="lg:col-span-2 space-y-6">
-             <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-[#E5EEF8] h-[600px] flex flex-col relative overflow-hidden">
+             <div className="bg-white rounded-[18px] p-6 md:p-8 shadow-sm border border-[#E5EEF8] h-[600px] flex flex-col relative overflow-hidden">
                 <div className="flex items-center justify-between mb-6 relative z-10">
                    <h2 className="font-bold text-xl text-slate-900 flex items-center gap-2">
                       <MapPin className="text-[#1677FF]" size={24} /> 考勤打卡
                    </h2>
-                   <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full font-bold border border-green-100 flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> 设备正常
+                   <span className="bg-sky-50 text-[#1677FF] text-xs px-2.5 py-1 rounded-full font-semibold border border-sky-100 flex items-center gap-1">
+                      智能考勤终端
                    </span>
                 </div>
                 <div className="flex-1 relative z-10">
@@ -118,7 +118,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
           <div className="space-y-6 flex flex-col">
              
              {/* Group Info */}
-             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5EEF8]">
+             <div className="bg-white rounded-[14px] p-6 shadow-sm border border-[#E5EEF8]">
                 <div className="flex items-center justify-between mb-6">
                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
                       <Briefcase size={20} className="text-[#1677FF]" /> 所属分组
@@ -182,7 +182,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
              </div>
 
              {/* Punch History */}
-             <div className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5EEF8] flex-1 min-h-[220px]">
+             <div className="bg-white rounded-[14px] p-6 shadow-sm border border-[#E5EEF8] flex-1 min-h-[220px]">
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E5EEF8]">
                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
                       <Footprints size={18} className="text-[#1677FF]" /> 今日足迹
@@ -224,7 +224,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
              </div>
 
              {/* Announcements */}
-             <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#E5EEF8] max-h-[200px] flex flex-col">
+             <div className="bg-white rounded-[14px] p-5 shadow-sm border border-[#E5EEF8] max-h-[200px] flex flex-col">
                 <div className="flex justify-between items-center mb-3 shrink-0">
                    <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Bell size={16} className="text-[#1677FF]" /> 通知公告</h3>
                 </div>

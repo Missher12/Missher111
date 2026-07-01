@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { maskPhone, maskIdCard } from '../../utils';
+import { ConfirmDialog, Toast } from '../ui/Kit';
 
 interface OutsourcedManagerProps {
   staffList: Staff[];
@@ -67,6 +68,35 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
   
   // Animation State
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('error');
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'primary' | 'warning';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'primary',
+    onConfirm: () => {}
+  });
+
+  const triggerConfirm = (title: string, message: string, onConfirm: () => void, variant: 'danger' | 'primary' | 'warning' = 'primary') => {
+    setConfirmState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
 
   const selectedGroup = useMemo(() => 
     groups.find(g => g.id === selectedGroupId) || groups[0] || null
@@ -145,20 +175,35 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
   const handleDeleteGroupClick = (id: string) => {
     const hasMembers = staffList.some(s => s.roles.some(r => r.groupId === id));
     if (hasMembers) {
-      alert('该分组下仍有成员，无法删除。请先移除成员。');
+      setToastType('error');
+      setToastMsg('该分组下仍有成员，无法删除。请先移除成员。');
       return;
     }
-    if (confirm('确定要删除此分组吗？')) {
-      onDeleteGroup(id);
-      if (selectedGroupId === id) setSelectedGroupId(null);
-    }
+    triggerConfirm(
+      '删除分组',
+      '确定要删除此分组吗？',
+      () => {
+        onDeleteGroup(id);
+        if (selectedGroupId === id) setSelectedGroupId(null);
+        setToastType('success');
+        setToastMsg('成功删除分组');
+      },
+      'danger'
+    );
   };
 
   const handleRemoveMember = (staff: Staff, groupId: string) => {
-    if (confirm(`确定将 ${staff.name} 移出该组吗？`)) {
-      const newRoles = staff.roles.filter(r => r.groupId !== groupId);
-      onUpdateStaff({ ...staff, roles: newRoles });
-    }
+    triggerConfirm(
+      '移除成员',
+      `确定将 ${staff.name} 移出该组吗？`,
+      () => {
+        const newRoles = staff.roles.filter(r => r.groupId !== groupId);
+        onUpdateStaff({ ...staff, roles: newRoles });
+        setToastType('success');
+        setToastMsg(`已将 ${staff.name} 移出该组`);
+      },
+      'danger'
+    );
   };
 
   const handleToggleLeader = (staff: Staff, groupId: string) => {
@@ -208,7 +253,8 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
     const candidates = Array.from(uniqueCandidatesMap.values());
 
     if (candidates.length === 0) {
-       alert('未发现可导入的新报名数据 (所有报名人员均已在员工列表中)');
+       setToastType('info');
+       setToastMsg('未发现可导入的新报名数据 (所有报名人员均已在员工列表中)');
        return;
     }
 
@@ -260,7 +306,8 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
 
   const handleCreateNewStaff = async () => {
      if (!newStaffData.name) {
-        alert('请输入姓名');
+        setToastType('error');
+        setToastMsg('请输入姓名');
         return;
      }
      
@@ -344,6 +391,16 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
               {roleDisplay}
           </span>
         )}
+
+        {/* Toggle CheckIn Operator Permission */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onUpdateStaff({ ...staff, isCheckInOperator: !staff.isCheckInOperator }); }}
+          className={`w-full text-center px-2 py-1.5 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 mt-2 border ${staff.isCheckInOperator ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'}`}
+          title={staff.isCheckInOperator ? "点击取消现场签到操作员权限" : "点击授权为现场签到操作员"}
+        >
+          <CheckSquare size={10} className={staff.isCheckInOperator ? "text-emerald-500" : "text-slate-300"} />
+          签到权限: {staff.isCheckInOperator ? '已授权' : '未授权'}
+        </button>
       </div>
     );
   };
@@ -757,6 +814,21 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
             </div>
          </div>
       )}
+      {toastMsg && (
+         <Toast 
+            message={toastMsg} 
+            type={toastType} 
+            onClose={() => setToastMsg(null)} 
+         />
+      )}
+      <ConfirmDialog
+         isOpen={confirmState.isOpen}
+         title={confirmState.title}
+         message={confirmState.message}
+         variant={confirmState.variant}
+         onConfirm={confirmState.onConfirm}
+         onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };
