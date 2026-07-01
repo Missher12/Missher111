@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Staff, Group, RegistrationRecord, GroupRole, PermissionSettings } from '../../types';
 import { 
   Users, 
@@ -102,9 +102,11 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
     groups.find(g => g.id === selectedGroupId) || groups[0] || null
   , [groups, selectedGroupId]);
 
-  if (!selectedGroupId && groups.length > 0) {
-    setSelectedGroupId(groups[0].id);
-  }
+  useEffect(() => {
+    if (!selectedGroupId && groups.length > 0) {
+      setSelectedGroupId(groups[0].id);
+    }
+  }, [selectedGroupId, groups]);
 
   const filteredGroupStaff = useMemo(() => {
     if (!selectedGroup) return [];
@@ -173,20 +175,26 @@ const OutsourcedManager: React.FC<OutsourcedManagerProps> = ({
   };
 
   const handleDeleteGroupClick = (id: string) => {
-    const hasMembers = staffList.some(s => s.roles.some(r => r.groupId === id));
-    if (hasMembers) {
+    if (id === PENDING_GROUP_ID) {
       setToastType('error');
-      setToastMsg('该分组下仍有成员，无法删除。请先移除成员。');
+      setToastMsg('系统预置分组，不可删除');
       return;
     }
+    const hasMembers = staffList.some(s => s.roles.some(r => r.groupId === id));
+    const confirmMsg = hasMembers 
+      ? '该分组下目前仍有成员。删除该分组后，这些成员的角色与关联信息将自动重置并安全回退到“总人员待分配组”。确定要删除此分组吗？'
+      : '确定要删除此分组吗？';
+
     triggerConfirm(
       '删除分组',
-      '确定要删除此分组吗？',
+      confirmMsg,
       () => {
         onDeleteGroup(id);
-        if (selectedGroupId === id) setSelectedGroupId(null);
+        if (selectedGroupId === id) {
+          setSelectedGroupId(PENDING_GROUP_ID);
+        }
         setToastType('success');
-        setToastMsg('成功删除分组');
+        setToastMsg('成功删除分组，关联成员已安全回退到待分配组');
       },
       'danger'
     );

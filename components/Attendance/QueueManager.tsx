@@ -21,13 +21,14 @@ import {
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import { ConfirmDialog } from '../ui/Kit';
+import { maskPhone } from '../../utils';
 
 interface QueueManagerProps {
   pendingStaff: Staff[]; 
   queue: QueueTicket[];
   registrationList: RegistrationRecord[]; 
   onCheckIn: (staffId: string) => void;
-  onUpdateTicketStatus: (ticketId: string, status: QueueTicket['status']) => void;
+  onUpdateTicketStatus: (ticketId: string, status: QueueTicket['status'] | 'REVOKED') => void;
   onBulkCheckIn?: (staffIds: string[]) => void;
   onClearQueue?: () => void;
 }
@@ -43,7 +44,8 @@ const QueueManager: React.FC<QueueManagerProps> = ({
   queue, 
   registrationList, 
   onCheckIn, 
-  onClearQueue 
+  onClearQueue,
+  onUpdateTicketStatus
 }) => {
   // UI State
   const [activeTab, setActiveTab] = useState<'PENDING' | 'CHECKED'>('PENDING');
@@ -141,16 +143,26 @@ const QueueManager: React.FC<QueueManagerProps> = ({
     }
 
     if (checkedInIds.has(record.id)) {
-      playSound('error');
+      playSound('success'); // Play success chime instead of error as per P0.1.3
+      const existingTicket = queue.find(t => t.staffId === record.id);
+      const timeStr = existingTicket ? new Date(existingTicket.checkInTime).toLocaleTimeString() : new Date().toLocaleTimeString();
+      const statusText = existingTicket
+        ? (existingTicket.status === 'WAITING' ? '等待叫号'
+          : existingTicket.status === 'CALLED' ? '正在叫号'
+          : existingTicket.status === 'COMPLETED' ? '已完成'
+          : '已跳过')
+        : '已完成签到';
+      const ticketNumStr = existingTicket ? `，编号为【${existingTicket.ticketNumber}】` : '';
+
       const res: ScanResult = { 
         status: 'WARNING', 
-        title: '重复签到', 
-        message: `${record.name} 已于 ${new Date().toLocaleTimeString()} 完成签到`,
+        title: '已签到核销', 
+        message: `${record.name} 已于 ${timeStr} 签到，当前状态为【${statusText}】${ticketNumStr}`,
         record 
       };
       setScanResult(res);
       setLastScanned(res);
-      setTimeout(() => setScanResult(null), 2000);
+      setTimeout(() => setScanResult(null), 3000); // 3 seconds is better for readability
       return;
     }
 
@@ -166,7 +178,7 @@ const QueueManager: React.FC<QueueManagerProps> = ({
     setLastScanned(res);
     setTimeout(() => setScanResult(null), 1500);
 
-  }, [registrationList, checkedInIds, onCheckIn]);
+  }, [registrationList, checkedInIds, onCheckIn, queue]);
 
   // --- Camera Logic ---
   const tick = useCallback(() => {
@@ -501,29 +513,91 @@ const QueueManager: React.FC<QueueManagerProps> = ({
             ) : (
               <>
                 {displayChecked.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 py-12">
                      <Clock size={48} className="mb-4 opacity-20" />
                      <p className="font-medium">暂无签到记录</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                     {displayChecked.map(ticket => (
-                       <div key={ticket.id} className="bg-white p-3 rounded-xl border border-green-100 shadow-sm flex justify-between items-center">
-                          <div className="flex items-center gap-3">
-                             <div className="bg-green-50 text-green-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0">
-                                <CheckCircle2 size={20} />
+                     {displayChecked.map(ticket => {
+                        const reg = registrationList.find(r => r.id === ticket.staffId);
+                        const regNumber = ticket.registrationNumber || reg?.registrationNumber || '未分配';
+                        const displayPhone = maskPhone(ticket.phone || reg?.phone || '');
+                        
+                        const statusBadge = (() => {
+                          switch(ticket.status) {
+                            case 'CALLED':
+                              return <span className="text-[10px] bg-rose-50 border border-rose-200 text-rose-600 px-2 py-0.5 rounded-full font-bold animate-pulse">正在叫号</span>;
+                            case 'COMPLETED':
+                              return <span className="text-[10px] bg-green-50 border border-green-200 text-green-600 px-2 py-0.5 rounded-full font-bold">已核销完成</span>;
+                            case 'SKIPPED':
+                              return <span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-bold">已跳过</span>;
+                            case 'WAITING':
+                            default:
+                              return <span className="text-[10px] bg-blue-50 border border-blue-100 text-[#1677FF] px-2 py-0.5 rounded-full font-bold">等候叫号</span>;
+                          }
+                        })();
+
+                        return (
+                          <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-100 hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                             <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-sm shrink-0 transition-colors ${
+                                   ticket.status === 'CALLED' ? 'bg-rose-50 text-rose-500 border border-rose-100' :
+                                   ticket.status === 'COMPLETED' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                   ticket.status === 'SKIPPED' ? 'bg-slate-100 text-slate-500 border border-slate-200' :
+                                   'bg-blue-50 text-[#1677FF] border border-blue-100'
+                                }`}>
+                                   {ticket.staffName[0]}
+                                </div>
+                                <div>
+                                   <div className="flex items-center gap-2 flex-wrap">
+                                      <h3 className="font-extrabold text-slate-800 text-sm leading-none">{ticket.staffName}</h3>
+                                      <span className="text-[10px] bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded font-mono font-semibold">#{regNumber}</span>
+                                      {statusBadge}
+                                   </div>
+                                   <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-2 flex-wrap font-semibold">
+                                     <span className="flex items-center gap-0.5"><Clock size={11} /> {new Date(ticket.checkInTime).toLocaleTimeString()}</span>
+                                     <span className="text-gray-200">•</span>
+                                     <span className="font-mono">{displayPhone}</span>
+                                     <span className="text-gray-200">•</span>
+                                     <span className="font-black text-[#1677FF] bg-blue-50 px-1.5 py-0.5 rounded text-[10px]">{ticket.ticketNumber}</span>
+                                   </p>
+                                </div>
                              </div>
-                             <div>
-                                <h3 className="font-bold text-gray-800 text-sm">{ticket.staffName}</h3>
-                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                  <Clock size={10} /> {new Date(ticket.checkInTime).toLocaleTimeString()}
-                                  <span className="text-gray-300">|</span>
-                                  <span className="font-mono text-gray-400">#{ticket.ticketNumber}</span>
-                                </p>
+                             
+                             {/* Actions Menu */}
+                             <div className="flex items-center gap-1.5 self-end md:self-auto flex-wrap">
+                                <button 
+                                  onClick={() => onUpdateTicketStatus(ticket.id, 'CALLED')}
+                                  disabled={ticket.status === 'CALLED' || ticket.status === 'COMPLETED'}
+                                  className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-xs font-bold transition-all"
+                                >
+                                  叫号
+                                </button>
+                                <button 
+                                  onClick={() => onUpdateTicketStatus(ticket.id, 'COMPLETED')}
+                                  disabled={ticket.status === 'COMPLETED'}
+                                  className="px-2.5 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-xs font-bold transition-all"
+                                >
+                                  核销完成
+                                </button>
+                                <button 
+                                  onClick={() => onUpdateTicketStatus(ticket.id, 'SKIPPED')}
+                                  disabled={ticket.status === 'SKIPPED' || ticket.status === 'COMPLETED'}
+                                  className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 disabled:opacity-40 disabled:pointer-events-none rounded-lg text-xs font-bold transition-all"
+                                >
+                                  跳过
+                                </button>
+                                <button 
+                                  onClick={() => onUpdateTicketStatus(ticket.id, 'REVOKED')}
+                                  className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-all"
+                                >
+                                  撤销签到
+                                </button>
                              </div>
                           </div>
-                       </div>
-                     ))}
+                        );
+                     })}
                      
                      {/* Reset Button - Ensure propagation is handled */}
                      {onClearQueue && queue.length > 0 && (

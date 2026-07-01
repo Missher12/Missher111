@@ -5,6 +5,7 @@ import { AdminUser, Staff, LoginConfig, RegistrationRecord } from '../../types';
 interface LoginProps {
   staffList: Staff[];
   registrationList: RegistrationRecord[];
+  onSiteRecords?: RegistrationRecord[];
   onLogin: (userId: string, role: 'ADMIN' | 'USER') => void;
   adminUsers: AdminUser[];
   loginConfig?: LoginConfig;
@@ -13,7 +14,7 @@ interface LoginProps {
 
 type LoginTab = 'CANDIDATE' | 'EMPLOYEE' | 'ADMIN';
 
-const Login: React.FC<LoginProps> = ({ staffList, registrationList, onLogin, adminUsers, loginConfig, defaultTab = 'CANDIDATE' }) => {
+const Login: React.FC<LoginProps> = ({ staffList, registrationList, onSiteRecords = [], onLogin, adminUsers, loginConfig, defaultTab = 'CANDIDATE' }) => {
   // Login Mode State
   const [activeTab, setActiveTab] = useState<LoginTab>(defaultTab);
 
@@ -158,29 +159,77 @@ const Login: React.FC<LoginProps> = ({ staffList, registrationList, onLogin, adm
     // 3. CANDIDATE LOGIN (Interview / Check-in / Pending)
     if (activeTab === 'CANDIDATE') {
       if (!name || !phone || !idCardSuffix) {
-         triggerError('请填写您的个人信息');
+         triggerError('请填写您的个人信息（包含姓名、手机、身份证后6位）');
          return;
       }
 
-      // Direct Match
-      const matchedReg = registrationList.find(r => r.name === name && r.phone === phone);
-      
+      // 1. Check if they are a formal active staff
+      const isFormalStaff = staffList.find(s => s.name === name && s.phone === phone && s.status === 'ACTIVE');
+      if (isFormalStaff) {
+         triggerError('您已是正式入职的 STAFF，请切换至【STAFF/编外】页签进行登录！');
+         return;
+      }
+
+      // 2. Search for matching record in non-active staff, registrationList, or onSiteRecords
+      let matchedReg: { id: string; name: string; idCard?: string; phone?: string; isRejected?: boolean; status?: string } | undefined;
+
+      const nonActiveStaff = staffList.find(s => s.name === name && s.phone === phone && s.status !== 'ACTIVE');
+      if (nonActiveStaff) {
+         matchedReg = {
+            id: nonActiveStaff.id,
+            name: nonActiveStaff.name,
+            idCard: nonActiveStaff.idCard,
+            phone: nonActiveStaff.phone,
+            isRejected: nonActiveStaff.status === 'REJECTED',
+            status: nonActiveStaff.status
+         };
+      }
+
       if (!matchedReg) {
-         triggerError('未找到该报名的核对名单。请确认姓名、手机号输入正确且已经导入汇总名单中。');
+         const regRecord = registrationList.find(r => r.name === name && r.phone === phone);
+         if (regRecord) {
+            matchedReg = {
+               id: regRecord.id,
+               name: regRecord.name,
+               idCard: regRecord.idCard,
+               phone: regRecord.phone,
+               isRejected: regRecord.isTalent === false && regRecord.managementNotes === 'REJECTED',
+               status: (regRecord.isTalent === false && regRecord.managementNotes === 'REJECTED') ? 'REJECTED' : 'PENDING'
+            };
+         }
+      }
+
+      if (!matchedReg) {
+         const siteRecord = onSiteRecords.find(r => r.name === name && r.phone === phone);
+         if (siteRecord) {
+            matchedReg = {
+               id: siteRecord.id,
+               name: siteRecord.name,
+               idCard: siteRecord.idCard,
+               phone: siteRecord.phone,
+               isRejected: siteRecord.isTalent === false && siteRecord.managementNotes === 'REJECTED',
+               status: 'PENDING'
+            };
+         }
+      }
+
+      // If no match found at all
+      if (!matchedReg) {
+         triggerError('未找到该报名的核对名单。请确认姓名、手机号输入正确，且已导入汇总名单中或已完成现场报名。');
          return;
       }
 
-      // If matched, verify ID suffix if it exists in the sheet
+      // Verify ID card suffix if present
       if (matchedReg.idCard) {
          const suffix = matchedReg.idCard.slice(-6);
          if (suffix !== idCardSuffix) {
-            triggerError('身份信息核对失败 (身份证后6位不符)。请输入正确的身份后6位！');
+            triggerError('身份信息核对失败（身份证后6位不符），请输入正确的身份证后6位！');
             return;
          }
       }
 
-      // Check status: If REJECTED, show Status Feedback View
-      if (matchedReg.isTalent === false && matchedReg.managementNotes === 'REJECTED') {
+      // Check if rejected
+      if (matchedReg.isRejected || matchedReg.status === 'REJECTED') {
          setLoginStatusView('REJECTED');
          return;
       }

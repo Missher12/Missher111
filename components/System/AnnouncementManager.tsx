@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Announcement, GroupRole } from '../../types';
 import { Megaphone, Pin, Trash2, Send, Users, Globe } from 'lucide-react';
 
@@ -10,6 +9,8 @@ interface AnnouncementManagerProps {
   onAddAnnouncement: (announcement: Announcement) => void;
   onDeleteAnnouncement: (id: string) => void;
   currentUserName: string;
+  currentUserId: string;
+  allowLeaderBroadcast: boolean;
 }
 
 const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({ 
@@ -18,27 +19,48 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
   announcements, 
   onAddAnnouncement, 
   onDeleteAnnouncement,
-  currentUserName
+  currentUserName,
+  currentUserId,
+  allowLeaderBroadcast
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [targetGroupId, setTargetGroupId] = useState<string>('GLOBAL');
+  
+  // Default to leader's first managed group, or 'GLOBAL' for Admin
+  const [targetGroupId, setTargetGroupId] = useState<string>(() => {
+    if (currentUserRole === 'ADMIN') return 'GLOBAL';
+    return currentUserGroups.length > 0 ? currentUserGroups[0].groupId : '';
+  });
+  
   const [isSticky, setIsSticky] = useState(false);
 
-  // Filter announcements: Admin sees all, Leader sees Global + Their Groups
-  const visibleAnnouncements = announcements.filter(a => {
-    if (currentUserRole === 'ADMIN') return true;
-    if (!a.targetGroupId) return true; // Global
-    return currentUserGroups.some(g => g.groupId === a.targetGroupId);
-  });
+  // Can publish check
+  const canPublish = currentUserRole === 'ADMIN' || (currentUserGroups.length > 0 && allowLeaderBroadcast);
+
+  // Filter and sort announcements: sticky first, then date descending
+  const visibleAnnouncements = useMemo(() => {
+    const filtered = announcements.filter(a => {
+      if (currentUserRole === 'ADMIN') return true;
+      if (!a.targetGroupId) return true; // Global
+      // Leader or staff can see if they are in that group
+      return currentUserGroups.some(g => g.groupId === a.targetGroupId);
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (a.isSticky && !b.isSticky) return -1;
+      if (!a.isSticky && b.isSticky) return 1;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [announcements, currentUserRole, currentUserGroups]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canPublish) return;
     
     let targetGroupInfo = undefined;
     let targetGroupName = undefined;
 
-    if (targetGroupId !== 'GLOBAL') {
+    if (targetGroupId !== 'GLOBAL' && targetGroupId !== '') {
       const group = currentUserGroups.find(g => g.groupId === targetGroupId);
       if (group) {
         targetGroupInfo = group.groupId;
@@ -53,6 +75,7 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
       date: new Date().toISOString().split('T')[0],
       type: isSticky ? 'URGENT' : 'NOTICE',
       authorName: currentUserName,
+      authorId: currentUserId,
       targetGroupId: targetGroupInfo,
       targetGroupName: targetGroupName,
       isSticky: currentUserRole === 'ADMIN' ? isSticky : false
@@ -62,6 +85,12 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
     setTitle('');
     setContent('');
     setIsSticky(false);
+  };
+
+  const canDelete = (announcement: Announcement) => {
+    if (currentUserRole === 'ADMIN') return true;
+    // Leader can only delete their own announcements and only if broadcasting is allowed
+    return currentUserGroups.length > 0 && allowLeaderBroadcast && announcement.authorId === currentUserId;
   };
 
   return (
@@ -76,83 +105,85 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
          </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={canPublish ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : "grid grid-cols-1 gap-6"}>
         {/* Create Form */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E5EEF8] hover:shadow-md transition-all duration-300 h-fit">
-          <h3 className="font-extrabold text-slate-800 mb-4 flex items-center gap-2">
-            <Send size={16} className="text-[#1677FF]" /> 发布新公告
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">发布范围</label>
-              <select 
-                value={targetGroupId}
-                onChange={(e) => setTargetGroupId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 cursor-pointer"
-              >
-                {currentUserRole === 'ADMIN' && (
-                  <option value="GLOBAL">全员可见 (Global)</option>
-                )}
-                {currentUserGroups.map(g => (
-                  <option key={g.groupId} value={g.groupId}>仅发给：{g.groupName}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">标题</label>
-              <input 
-                type="text" 
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
-                placeholder="请输入公告标题"
-              />
-            </div>
-
-            <div>
-               <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">内容详情</label>
-               <textarea 
-                 required
-                 rows={4}
-                 value={content}
-                 onChange={(e) => setContent(e.target.value)}
-                 className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 resize-none"
-                 placeholder="请输入公告内容..."
-               />
-            </div>
-
-            {currentUserRole === 'ADMIN' && targetGroupId === 'GLOBAL' && (
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="sticky" 
-                  checked={isSticky}
-                  onChange={(e) => setIsSticky(e.target.checked)}
-                  className="rounded text-[#1677FF] focus:ring-[#1677FF] cursor-pointer"
-                />
-                <label htmlFor="sticky" className="text-xs font-bold text-slate-600 flex items-center gap-1 cursor-pointer">
-                  <Pin size={12} className="rotate-45" /> 置顶公告
-                </label>
+        {canPublish && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#E5EEF8] hover:shadow-md transition-all duration-300 h-fit">
+            <h3 className="font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+              <Send size={16} className="text-[#1677FF]" /> 发布新公告
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">发布范围</label>
+                <select 
+                  value={targetGroupId}
+                  onChange={(e) => setTargetGroupId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 cursor-pointer"
+                >
+                  {currentUserRole === 'ADMIN' && (
+                    <option value="GLOBAL">全员可见 (Global)</option>
+                  )}
+                  {currentUserGroups.map(g => (
+                    <option key={g.groupId} value={g.groupId}>仅发给主管小队：{g.groupName}</option>
+                  ))}
+                </select>
               </div>
-            )}
 
-            <button type="submit" className="w-full bg-[#1677FF] text-white py-2.5 rounded-xl hover:bg-[#0B5FCC] font-extrabold text-sm transition-all shadow-sm shadow-blue-100/20">
-              立即发布
-            </button>
-          </form>
-        </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">标题</label>
+                <input 
+                  type="text" 
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300"
+                  placeholder="请输入公告标题"
+                />
+              </div>
+
+              <div>
+                 <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">内容详情</label>
+                 <textarea 
+                   required
+                   rows={4}
+                   value={content}
+                   onChange={(e) => setContent(e.target.value)}
+                   className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-sm outline-none focus:bg-white focus:border-sky-300 focus:ring-2 focus:ring-sky-100 transition-all duration-300 resize-none"
+                   placeholder="请输入公告内容..."
+                 />
+              </div>
+
+              {currentUserRole === 'ADMIN' && targetGroupId === 'GLOBAL' && (
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="sticky" 
+                    checked={isSticky}
+                    onChange={(e) => setIsSticky(e.target.checked)}
+                    className="rounded text-[#1677FF] focus:ring-[#1677FF] cursor-pointer"
+                  />
+                  <label htmlFor="sticky" className="text-xs font-bold text-slate-600 flex items-center gap-1 cursor-pointer">
+                    <Pin size={12} className="rotate-45" /> 置顶公告
+                  </label>
+                </div>
+              )}
+
+              <button type="submit" className="w-full bg-[#1677FF] text-white py-2.5 rounded-xl hover:bg-[#0B5FCC] font-extrabold text-sm transition-all shadow-sm shadow-blue-100/20">
+                立即发布
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* List */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={canPublish ? "lg:col-span-2 space-y-4" : "space-y-4"}>
           <h3 className="font-extrabold text-slate-800 flex items-center gap-2 mb-2">历史公告列表</h3>
           {visibleAnnouncements.length === 0 ? (
             <div className="bg-white p-8 rounded-2xl border border-[#E5EEF8] text-center text-slate-400 shadow-sm">
               暂无已发布的公告
             </div>
           ) : (
-            visibleAnnouncements.slice().reverse().map(announcement => (
+            visibleAnnouncements.map(announcement => (
               <div key={announcement.id} className="bg-white p-5 rounded-2xl border border-[#E5EEF8] shadow-sm relative group hover:border-blue-100 hover:shadow-md transition-all duration-300">
                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
@@ -168,12 +199,14 @@ const AnnouncementManager: React.FC<AnnouncementManagerProps> = ({
                          </span>
                        )}
                     </div>
-                    <button 
-                      onClick={() => onDeleteAnnouncement(announcement.id)}
-                      className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-slate-50 rounded-lg"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canDelete(announcement) && (
+                      <button 
+                        onClick={() => onDeleteAnnouncement(announcement.id)}
+                        className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-slate-50 rounded-lg"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                  </div>
                  <p className="text-slate-600 text-xs md:text-sm mb-3 whitespace-pre-wrap leading-relaxed">{announcement.content}</p>
                  <div className="flex justify-between items-center text-xs text-slate-400 border-t border-slate-50 pt-3 font-medium">

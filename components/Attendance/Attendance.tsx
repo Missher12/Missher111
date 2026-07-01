@@ -9,9 +9,10 @@ interface AttendanceProps {
   onClockOut: (photoUrl: string, status: AttendanceRecord['status'], timestamp: string) => void;
   status: AttendanceStatus;
   config: AttendanceConfig;
+  isCompleted?: boolean;
 }
 
-const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, config }) => {
+const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, config, isCompleted }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -182,8 +183,8 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
                <div className="text-right">
                   <p className="text-white/80 text-xs font-medium tracking-widest uppercase mb-1">当前状态</p>
                   <p className="text-white font-bold flex items-center gap-1 justify-end">
-                     {status === AttendanceStatus.CLOCKED_OUT ? '未签到' : '工作中'}
-                     {status === AttendanceStatus.CLOCKED_IN && <div className="w-2 h-2 bg-green-400 rounded-full"></div>}
+                     {isCompleted ? '今日已完成考勤' : (status === AttendanceStatus.CLOCKED_OUT ? '未签到' : '工作中')}
+                     {(isCompleted || status === AttendanceStatus.CLOCKED_IN) && <div className="w-2 h-2 bg-green-400 rounded-full"></div>}
                   </p>
                </div>
             </div>
@@ -211,14 +212,23 @@ const Attendance: React.FC<AttendanceProps> = ({ onClockIn, onClockOut, status, 
       <div className="mt-4">
         <button
           onClick={handleClockAction}
-          disabled={loading || !isCameraReady || !!error}
+          disabled={loading || !isCameraReady || !!error || isCompleted}
           className={`w-full py-4 rounded-2xl font-black text-lg text-white shadow-lg transform transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 relative overflow-hidden group
-            ${status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-sky-200'}`}
+            ${isCompleted ? 'bg-green-600 shadow-green-100' : (status === AttendanceStatus.CLOCKED_OUT ? 'bg-gray-900 hover:bg-black shadow-gray-200' : 'bg-[#1677FF] hover:bg-[#0B5FCC] shadow-sky-200')}`}
         >
           {loading ? <Clock className="animate-spin" size={24} /> : (
              <>
-                {status === AttendanceStatus.CLOCKED_OUT ? <Clock size={20} className="group-hover:scale-110 transition-transform" /> : <CheckCircle2 size={20} />}
-                <span>{status === AttendanceStatus.CLOCKED_OUT ? '上班打卡 (Clock In)' : '下班打卡 (Clock Out)'}</span>
+                {isCompleted ? (
+                   <>
+                      <CheckCircle2 size={20} />
+                      <span>今日已完成考勤 (Completed)</span>
+                   </>
+                ) : (
+                   <>
+                      {status === AttendanceStatus.CLOCKED_OUT ? <Clock size={20} className="group-hover:scale-110 transition-transform" /> : <CheckCircle2 size={20} />}
+                      <span>{status === AttendanceStatus.CLOCKED_OUT ? '上班打卡 (Clock In)' : '下班打卡 (Clock Out)'}</span>
+                   </>
+                )}
              </>
           )}
         </button>

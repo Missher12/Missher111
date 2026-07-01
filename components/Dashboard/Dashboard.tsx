@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { AttendanceRecord, QueueTicket, Announcement, Staff, Group, GroupRole } from '../../types';
+import { getLocalDateKey } from '../../utils';
 
 interface DashboardProps {
   attendanceRecords: AttendanceRecord[];
@@ -55,15 +56,16 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [attendanceRecords, currentUser, isAdmin]);
 
   const lastClockIn = useMemo(() => {
-    return myRecords.find(r => r.type === 'IN');
+    const todayKey = getLocalDateKey();
+    return myRecords.find(r => r.type === 'IN' && getLocalDateKey(r.timestamp) === todayKey);
   }, [myRecords]);
 
   // 2. Global Stats for Admin
   const globalStats = useMemo(() => {
      if (!isAdmin) return null;
-     const todayStr = new Date().toDateString();
+     const todayKey = getLocalDateKey();
      
-     const todayRecords = attendanceRecords.filter(r => new Date(r.timestamp).toDateString() === todayStr && r.type === 'IN');
+     const todayRecords = attendanceRecords.filter(r => getLocalDateKey(r.timestamp) === todayKey && r.type === 'IN');
      const presentStaffIds = new Set(todayRecords.map(r => r.staffId));
      const activeStaffCount = staffList.filter(s => s.status === 'ACTIVE').length;
      const presentCount = presentStaffIds.size;
@@ -80,20 +82,20 @@ const Dashboard: React.FC<DashboardProps> = ({
   // 3. Recharts check-in trend data logic based on real check-in times
   const trendData = useMemo(() => {
     const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '16:00', '18:00'];
-    const todayStr = new Date().toDateString();
+    const todayKey = getLocalDateKey();
     
     return hours.map(h => {
       const targetHour = parseInt(h.split(':')[0]);
       const count = attendanceRecords.filter(r => {
         const d = new Date(r.timestamp);
-        return d.toDateString() === todayStr && d.getHours() <= targetHour && r.type === 'IN';
+        return getLocalDateKey(r.timestamp) === todayKey && d.getHours() <= targetHour && r.type === 'IN';
       }).length;
       return { time: h, '签到人数': count };
     });
   }, [attendanceRecords]);
 
   // 4. Calculate Group Stats
-  const todayStr = new Date().toDateString();
+  const todayKey = getLocalDateKey();
   const groupStats = useMemo(() => {
     return groups.map(group => {
       const groupStaff = staffList.filter(s => s.status === 'ACTIVE' && s.roles.some(r => r.groupId === group.id));
@@ -103,7 +105,7 @@ const Dashboard: React.FC<DashboardProps> = ({
          return attendanceRecords.some(r => 
             r.staffId === s.id && 
             r.type === 'IN' && 
-            new Date(r.timestamp).toDateString() === todayStr
+            getLocalDateKey(r.timestamp) === todayKey
          );
       }).length;
 
@@ -115,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         rate: total > 0 ? Math.round((presentCount / total) * 100) : 0
       };
     });
-  }, [groups, staffList, attendanceRecords, todayStr]);
+  }, [groups, staffList, attendanceRecords, todayKey]);
 
   const sortedAnnouncements = useMemo(() => {
     return [...announcements].sort((a, b) => {

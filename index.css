@@ -1,0 +1,37 @@
+/* Standard font family and numbers glyph configuration */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", Arial, sans-serif;
+}
+
+body, button, input, textarea, select {
+  font-family: var(--font-ui) !important;
+}
+
+.numeric-text, .table-number, .order-number, .phone-number, .stat-number, .date-number {
+  font-family: var(--font-ui) !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  font-feature-settings: "zero" 0 !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

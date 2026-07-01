@@ -92,6 +92,9 @@ export interface QueueTicket {
   status: QueueStatus;
   checkInTime: string;
   calledTime?: string;
+  sessionDate?: string; // New: Local date field to restrict duplicate checkin within the same day
+  phone?: string; // New: Phone for matching/脱敏 display
+  registrationNumber?: string; // New: Registration number for display
 }
 
 export interface UserSession {
@@ -110,6 +113,7 @@ export interface Announcement {
   targetGroupId?: string; // If undefined, it's global
   targetGroupName?: string;
   authorName: string;
+  authorId: string; // New: Unique ID of the author (admin or staff ID)
   isSticky?: boolean; // Only admin can sticky
 }
 

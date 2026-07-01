@@ -26,7 +26,7 @@ import {
   UserX
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
-import { maskPhone, maskIdCard, isSameDay } from '../../utils';
+import { maskPhone, maskIdCard, isSameDay, getLocalDateKey } from '../../utils';
 
 interface AttendanceReportsProps {
   staffList: Staff[];
@@ -49,7 +49,7 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
   onUpdateOrAddRecord,
   fixedGroupId 
 }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateKey();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   
   const visibleGroups = groups;
@@ -69,13 +69,13 @@ const AttendanceReports: React.FC<AttendanceReportsProps> = ({
   const [editOutTime, setEditOutTime] = useState('');
 
   const getRecordForDate = (staffId: string, dateStr: string, type: 'IN' | 'OUT') => {
-    const recordsOnDate = allRecords.filter(r => r.staffId === staffId && isSameDay(r.timestamp, dateStr) && r.type === type);
+    const recordsOnDate = allRecords.filter(r => r.staffId === staffId && getLocalDateKey(r.timestamp) === dateStr && r.type === type);
     // Return earliest for IN, latest for OUT
     if (type === 'IN') {
         return recordsOnDate.sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0];
     }
     return recordsOnDate.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-};
+  };
 
   const activeStaff = useMemo(() => staffList.filter(s => s.status === 'ACTIVE'), [staffList]);
   

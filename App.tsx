@@ -12,7 +12,7 @@ import SystemSettings from './components/System/SystemSettings';
 import TrainingCheckinManager from './components/Attendance/TrainingCheckinManager';
 import CheckInSystem from './components/Attendance/CheckInSystem'; 
 import IntervieweeDashboard from './components/Interview/IntervieweeDashboard';
-import { isSameDay, calculateAttendanceStatus } from './utils';
+import { isSameDay, calculateAttendanceStatus, getLocalDateKey } from './utils';
 
 import { 
   AdminUser,
@@ -295,6 +295,8 @@ const App: React.FC = () => {
     
     if (!person) return; 
     
+    const regNum = (person as any).registrationNumber || '';
+    
     // Add Ticket
     const newTicket: QueueTicket = {
       id: crypto.randomUUID(),
@@ -302,13 +304,20 @@ const App: React.FC = () => {
       staffId: person.id,
       staffName: person.name,
       status: 'WAITING',
-      checkInTime: new Date().toISOString()
+      checkInTime: new Date().toISOString(),
+      phone: person.phone,
+      registrationNumber: regNum,
+      sessionDate: getLocalDateKey(new Date().toISOString())
     };
     setQueueData(prev => [...prev, newTicket]);
   };
 
-  const updateTicketStatus = (ticketId: string, status: QueueTicket['status']) => {
-    setQueueData(queueData.map(t => t.id === ticketId ? { ...t, status } : t));
+  const updateTicketStatus = (ticketId: string, status: QueueTicket['status'] | 'REVOKED') => {
+    if (status === 'REVOKED') {
+      setQueueData(queueData.filter(t => t.id !== ticketId));
+    } else {
+      setQueueData(queueData.map(t => t.id === ticketId ? { ...t, status } : t));
+    }
   };
   
   const handleBatchAddStaffFromReg = (newStaffList: Staff[]) => {
@@ -330,8 +339,37 @@ const App: React.FC = () => {
 
   // --- CRUD Wrappers ---
   const handleAddGroup = (g: Group) => setGroups([...groups, g]);
-  const handleUpdateGroup = (g: Group) => setGroups(groups.map(grp => grp.id === g.id ? g : grp));
-  const handleDeleteGroup = (gid: string) => setGroups(groups.filter(g => g.id !== gid));
+  const handleUpdateGroup = (g: Group) => {
+    setGroups(groups.map(grp => grp.id === g.id ? g : grp));
+    // Synchronize group names for staff roles to prevent outdated display
+    setStaffList(prevList => prevList.map(s => {
+      const hasGroup = s.roles.some(r => r.groupId === g.id);
+      if (!hasGroup) return s;
+      const updatedRoles = s.roles.map(r => r.groupId === g.id ? { ...r, groupName: g.name } : r);
+      return { ...s, roles: updatedRoles };
+    }));
+  };
+  const handleDeleteGroup = (gid: string) => {
+    if (gid === 'g_pending_allocation') {
+      alert('系统预置分组，不可删除');
+      return;
+    }
+    setGroups(groups.filter(g => g.id !== gid));
+    // Automatic rollback for deleted group members to the pending allocation group
+    setStaffList(prevList => prevList.map(s => {
+      const hasGroup = s.roles.some(r => r.groupId === gid);
+      if (!hasGroup) return s;
+      let updatedRoles = s.roles.filter(r => r.groupId !== gid);
+      if (updatedRoles.length === 0) {
+        updatedRoles = [{
+          groupId: 'g_pending_allocation',
+          groupName: '总人员待分配组',
+          isLeader: false
+        }];
+      }
+      return { ...s, roles: updatedRoles };
+    }));
+  };
   const handleUpdateStaff = (s: Staff) => setStaffList(staffList.map(st => st.id === s.id ? s : st));
   const handleAddStaff = (s: Staff) => setStaffList([...staffList, s]);
   const handleAddAdmin = (u: AdminUser) => {
@@ -364,7 +402,9 @@ const App: React.FC = () => {
           const userGroup = groups.find(g => userGroupIds.includes(g.id)); // Primary group for display
           
           const myRecords = attendanceRecords.filter(r => r.staffId === session.staff?.id).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-          const status = myRecords[0]?.type === 'IN' ? AttendanceStatus.CLOCKED_IN : AttendanceStatus.CLOCKED_OUT;
+          const todayKey = getLocalDateKey();
+          const todayRecords = myRecords.filter(r => getLocalDateKey(r.timestamp) === todayKey);
+          const status = (todayRecords.length > 0 && todayRecords[0].type === 'IN') ? AttendanceStatus.CLOCKED_IN : AttendanceStatus.CLOCKED_OUT;
           
           return <StaffDashboard 
               currentUser={session.staff}
@@ -374,8 +414,9 @@ const App: React.FC = () => {
               // Fixed: Filter announcements checking ALL user groups
               announcements={announcements.filter(a => !a.targetGroupId || userGroupIds.includes(a.targetGroupId))}
               attendanceStatus={status}
-              attendanceHistory={myRecords.filter(r => isSameDay(r.timestamp, new Date().toISOString()))}
+              attendanceHistory={myRecords}
               attendanceConfig={attendanceConfig}
+              allowStaffViewTeam={permissionSettings.allowStaffViewTeam}
               onClockIn={(p, s, t) => handleStaffPunch('IN', p, s, t)}
               onClockOut={(p, s, t) => handleStaffPunch('OUT', p, s, t)}
             />;
@@ -408,13 +449,20 @@ const App: React.FC = () => {
       
       case 'checkin_system':
         if (!canUseCheckIn(session, permissionSettings)) {
+          const isAdmin = session?.role === 'ADMIN';
           return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-[#E5EEF8] shadow-sm max-w-md mx-auto mt-20">
               <div className="p-3 bg-rose-50 text-rose-500 rounded-full mb-4">
                 <AlertCircle size={32} />
               </div>
-              <h3 className="text-base font-bold text-slate-800 mb-2">现场签到功能暂未开启</h3>
-              <p className="text-xs text-slate-500 text-center leading-relaxed">该功能已被系统管理员关闭，或您未被授权为“签到操作员”。如有疑问，请联系现场负责人。</p>
+              <h3 className="text-base font-bold text-slate-800 mb-2">
+                {isAdmin ? '现场签到功能已关闭' : '现场签到功能暂未开启'}
+              </h3>
+              <p className="text-xs text-slate-500 text-center leading-relaxed">
+                {isAdmin 
+                  ? '现场签到功能已由系统设置关闭，如需调试请前往系统设置开启。'
+                  : '该功能已被系统管理员关闭，或您未被授权为“签到操作员”。如有疑问，请联系现场负责人。'}
+              </p>
             </div>
           );
         }
@@ -459,7 +507,16 @@ const App: React.FC = () => {
           onDeleteGroup={handleDeleteGroup} 
         />;
       case 'announcements':
-        return <AnnouncementManager currentUserRole={session?.role || 'USER'} currentUserGroups={session?.staff?.roles || []} announcements={announcements} onAddAnnouncement={(a) => setAnnouncements([a, ...announcements])} onDeleteAnnouncement={(id) => setAnnouncements(announcements.filter(a => a.id !== id))} currentUserName={session?.staff?.name || '管理员'} />;
+        return <AnnouncementManager 
+          currentUserRole={session?.role || 'USER'} 
+          currentUserGroups={session?.staff?.roles.filter(r => r.isLeader) || []} 
+          announcements={announcements} 
+          onAddAnnouncement={(a) => setAnnouncements([a, ...announcements])} 
+          onDeleteAnnouncement={(id) => setAnnouncements(announcements.filter(a => a.id !== id))} 
+          currentUserName={session?.staff?.name || '管理员'} 
+          currentUserId={session?.role === 'ADMIN' ? 'ADMIN' : (session?.staff?.id || '')}
+          allowLeaderBroadcast={permissionSettings.allowLeaderBroadcast}
+        />;
       case 'settings':
         return <SystemSettings 
           onSave={(s) => { setSystemDomain(s.domain); setAttendanceConfig(s.attendance); setPermissionSettings(s.permissions); setLoginConfig(s.loginConfig); setRegistrationConfig(s.registrationConfig); }} 
@@ -479,7 +536,7 @@ const App: React.FC = () => {
 
   // If no session, show Login
   if (!session) {
-      return <Login staffList={staffList} registrationList={registrationList} onLogin={handleLogin} adminUsers={adminUsers} loginConfig={loginConfig} defaultTab="CANDIDATE" />;
+      return <Login staffList={staffList} registrationList={registrationList} onSiteRecords={onSiteRecords} onLogin={handleLogin} adminUsers={adminUsers} loginConfig={loginConfig} defaultTab="CANDIDATE" />;
   }
 
   const isLeader = session?.role === 'USER' && session.staff?.roles.some(r => r.isLeader);
@@ -509,7 +566,7 @@ const App: React.FC = () => {
       {
         title: '现场管理',
         items: [
-          { id: 'checkin_system', label: '现场签到', icon: ScanLine },
+          ...(canUseCheckIn(session, permissionSettings) ? [{ id: 'checkin_system', label: '现场签到', icon: ScanLine }] : []),
           { id: 'reports', label: '考勤报表', icon: BarChart3 }
         ]
       },

@@ -77,35 +77,68 @@ const IntervieweeDashboard: React.FC<IntervieweeDashboardProps> = ({ staff, myTi
       <div className="flex-1 p-4 md:p-6 max-w-md mx-auto w-full space-y-6">
          
          {/* 1. Main Status Card (Ticket or QR) */}
-         {myTicket ? (
-            // --- CHECKED IN VIEW ---
-            <div className="bg-white rounded-3xl shadow-lg border border-blue-100/40 overflow-hidden animate-in zoom-in duration-300">
-               <div className="bg-emerald-500 p-8 text-center text-white relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.2)_1px,transparent_0)] bg-[length:20px_20px] opacity-30"></div>
-                  <div className="relative z-10 flex flex-col items-center">
-                     <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 shadow-inner">
-                        <CheckCircle2 size={36} className="text-white" />
-                     </div>
-                     <h2 className="text-xl font-extrabold tracking-tight">已完成签到</h2>
-                     <p className="text-emerald-100 text-xs mt-1 font-medium">请在现场等候安排</p>
-                  </div>
-               </div>
+         {myTicket ? (() => {
+            const ticketStatus = myTicket.status || 'WAITING';
+            const statusConfig = {
+              WAITING: {
+                bgClass: 'bg-amber-500',
+                title: '排队等候中',
+                desc: '请在现场等候叫号',
+                badgeText: '等待叫号'
+              },
+              CALLED: {
+                bgClass: 'bg-rose-500 animate-pulse',
+                title: '已叫号，请前往工作人员处',
+                desc: '您的号码已被呼叫，请立即前往指定区域',
+                badgeText: '正在叫号'
+              },
+              COMPLETED: {
+                bgClass: 'bg-emerald-500',
+                title: '已完成',
+                desc: '请在现场等候安排',
+                badgeText: '签到成功'
+              },
+              SKIPPED: {
+                bgClass: 'bg-slate-500',
+                title: '已跳过，请联系工作人员',
+                desc: '因未能呼叫到您，已暂时跳过。请联系服务台',
+                badgeText: '已跳过'
+              }
+            };
+            const currentConfig = statusConfig[ticketStatus] || statusConfig.WAITING;
 
-               <div className="p-8 text-center bg-white relative">
-                  {/* Decorative Ticket Notches */}
-                  <div className="absolute top-0 left-0 -mt-3 -ml-3 w-6 h-6 bg-slate-50 rounded-full"></div>
-                  <div className="absolute top-0 right-0 -mt-3 -mr-3 w-6 h-6 bg-slate-50 rounded-full"></div>
+            return (
+              <div className="bg-white rounded-3xl shadow-lg border border-blue-100/40 overflow-hidden animate-in zoom-in duration-300">
+                 <div className={`${currentConfig.bgClass} p-8 text-center text-white relative overflow-hidden transition-colors duration-500`}>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.2)_1px,transparent_0)] bg-[length:20px_20px] opacity-30"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                       <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 shadow-inner">
+                          <CheckCircle2 size={36} className="text-white" />
+                       </div>
+                       <h2 className="text-xl font-extrabold tracking-tight leading-tight">{currentConfig.title}</h2>
+                       <p className="text-white/90 text-xs mt-1.5 font-medium">{currentConfig.desc}</p>
+                    </div>
+                 </div>
 
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">您的入场编号</p>
-                  <div className="text-5xl font-black text-[#0c2f42] tracking-tighter mb-2">
-                     {myTicket.ticketNumber}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-4 font-semibold">
-                     签到时间: {new Date(myTicket.checkInTime).toLocaleTimeString()}
-                  </p>
-               </div>
-            </div>
-         ) : (
+                 <div className="p-8 text-center bg-white relative">
+                    {/* Decorative Ticket Notches */}
+                    <div className="absolute top-0 left-0 -mt-3 -ml-3 w-6 h-6 bg-slate-50 rounded-full"></div>
+                    <div className="absolute top-0 right-0 -mt-3 -mr-3 w-6 h-6 bg-slate-50 rounded-full"></div>
+
+                    <div className="inline-block px-3 py-1 rounded-full text-[10px] font-bold text-slate-500 bg-slate-100 uppercase tracking-wider mb-2">
+                       {currentConfig.badgeText}
+                    </div>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">您的入场编号</p>
+                    <div className="text-5xl font-black text-[#0c2f42] tracking-tighter mb-2 numeric-text">
+                       {myTicket.ticketNumber}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-4 font-semibold date-number">
+                       签到时间: {new Date(myTicket.checkInTime).toLocaleTimeString()}
+                    </p>
+                 </div>
+              </div>
+            );
+         })() : (
             // --- QR CODE VIEW ---
             <div className="bg-white rounded-3xl shadow-md border border-[#E5EEF8]/80 p-8 flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                <h2 className="text-lg font-extrabold text-[#0c2f42] mb-1.5">扫码签到</h2>

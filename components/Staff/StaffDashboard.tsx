@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Staff, Group, Announcement, AttendanceRecord, AttendanceConfig, AttendanceStatus } from '../../types';
 import { Phone, Clock, CalendarDays, MapPin, Sun, Bell, Briefcase, Zap, Footprints, Image as ImageIcon, X, Shield, Users, FileText } from 'lucide-react';
 import Attendance from '../Attendance/Attendance';
-import { maskPhone } from '../../utils';
+import { maskPhone, getLocalDateKey } from '../../utils';
 
 interface StaffDashboardProps {
   currentUser: Staff;
@@ -16,6 +16,7 @@ interface StaffDashboardProps {
   attendanceConfig: AttendanceConfig;
   onClockIn: (photoUrl: string, status: AttendanceRecord['status'], timestamp: string) => void;
   onClockOut: (photoUrl: string, status: AttendanceRecord['status'], timestamp: string) => void;
+  allowStaffViewTeam?: boolean;
 }
 
 const StaffDashboard: React.FC<StaffDashboardProps> = ({
@@ -28,7 +29,8 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
   attendanceHistory = [],
   attendanceConfig,
   onClockIn,
-  onClockOut
+  onClockOut,
+  allowStaffViewTeam = true
 }) => {
   const currentDate = new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' });
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -36,14 +38,29 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
 
   const activeLeaders = leaders || [];
   const amILeader = group && currentUser.roles.some(r => r.groupId === group.id && r.isLeader);
-  const punchCount = attendanceHistory.length;
-  const todaysRecords = [...attendanceHistory].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const teammates = staffList.filter(s => 
-    s.status === 'ACTIVE' && 
-    s.id !== currentUser.id && 
-    s.roles.some(r => r.groupId === group?.id)
-  );
+  const todayKey = getLocalDateKey();
+  const todaysRecords = attendanceHistory
+    .filter(r => getLocalDateKey(r.timestamp) === todayKey)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const punchCount = todaysRecords.length;
+  
+  const hasInToday = todaysRecords.some(r => r.type === 'IN');
+  const hasOutToday = todaysRecords.some(r => r.type === 'OUT');
+  const isAttendanceCompleted = hasInToday && hasOutToday;
+
+  // Whether teammates list is allowed to be viewed
+  const canViewTeammates = allowStaffViewTeam || amILeader;
+
+  const teammates = useMemo(() => {
+    if (!canViewTeammates) return [];
+    return staffList.filter(s => 
+      s.status === 'ACTIVE' && 
+      s.id !== currentUser.id && 
+      s.roles.some(r => r.groupId === group?.id)
+    );
+  }, [canViewTeammates, staffList, currentUser.id, group?.id]);
 
   return (
     <div className="animate-fade-in pb-24 md:pb-10 w-full">
@@ -107,7 +124,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
                    <Attendance 
                       onClockIn={onClockIn}
                       onClockOut={onClockOut}
-                      status={attendanceStatus}
+                      status={attendanceStatus} isCompleted={isAttendanceCompleted}
                       config={attendanceConfig}
                    />
                 </div>
@@ -159,7 +176,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-3 flex items-center gap-1">
                       <Users size={10} /> 同组成员 ({teammates.length})
                    </p>
-                   {teammates.length > 0 ? (
+                   {canViewTeammates ? (teammates.length > 0 ? (
                       <div className="space-y-3 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
                          {teammates.map(tm => (
                             <div key={tm.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
@@ -176,7 +193,7 @@ const StaffDashboard: React.FC<StaffDashboardProps> = ({
                          ))}
                       </div>
                    ) : (
-                      <p className="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">暂无其他成员</p>
+                      <p className="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">暂无其他成员</p>)) : (<p className="text-xs text-amber-600 text-center py-4 bg-amber-50/50 rounded-lg border border-dashed border-amber-200 font-medium">当前团队成员已隐藏</p>
                    )}
                 </div>
              </div>

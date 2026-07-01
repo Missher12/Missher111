@@ -398,18 +398,35 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
   // --- Import Logic ---
   const handleDownloadTemplate = () => {
     const headers = ['姓名', '出生日期', '年龄', '性别', '手机号码', '邮箱', '身份证号码', '开户行', '支行信息', '银行卡账号', '工作经历', '5.1', '5.2', '5.3'];
-    const sampleRow = ['张三', '2000-01-01', '24', '男', '13800138000', 'zhangsan@email.com', '440106200001011234', '招商银行', '广州天河支行', '6225880000000000', '曾任职于某大型连锁餐饮品牌店长，具备3年团队管理经验；熟悉POS系统操作；性格开朗，善于沟通。', '全天', '上午', ''];
-    // Add BOM for Excel to recognize UTF-8
-    const bom = '\uFEFF'; 
+    const sampleRow = ['张三', '2000-01-01', '24', '男', '13800138000', 'zhangsan@email.com', '440106200001011234', '招商银行', '广州天河支行', '6225880000000000', '曾任职于某大型连锁餐饮品牌'];
+    const bom = '\uFEFF';
     const csvContent = bom + headers.join(',') + '\n' + sampleRow.join(',');
-    
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = '报名导入模板.csv';
+    link.download = `人员批量导入模板.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const parseCSVRow = (row: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if ((char === ',' || char === '\t') && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result.map(cell => cell.replace(/^"|"$/g, '').trim());
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,26 +437,59 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
       setTimeout(() => {
           const reader = new FileReader();
           reader.onload = (evt) => {
-            const content = evt.target?.result as string;
-            processImport(content);
+            try {
+              const arrayBuffer = evt.target?.result as ArrayBuffer;
+              const uint8Array = new Uint8Array(arrayBuffer);
+              
+              // 1. Try decoding as UTF-8
+              let decoder = new TextDecoder('utf-8');
+              let text = decoder.decode(uint8Array);
+              
+              // 2. Fallback to GBK if we detect double-byte characters corruption (e.g. contains lots of replacement characters or doesn't have "姓名")
+              const replacementCharCount = (text.match(/\uFFFD/g) || []).length;
+              if (replacementCharCount > 0 && (replacementCharCount > 3 || !text.includes('姓名'))) {
+                try {
+                  const gbkDecoder = new TextDecoder('gbk');
+                  const gbkText = gbkDecoder.decode(uint8Array);
+                  if (gbkText.includes('姓名')) {
+                    text = gbkText;
+                  }
+                } catch (err) {
+                  console.error('GBK fall-back decoding failed, sticking to UTF-8:', err);
+                }
+              }
+              
+              processImport(text);
+            } catch (err: any) {
+              setToastType('error');
+              setToastMsg(`文件读取异常: ${err.message || '未知错误'}`);
+            } finally {
+              setIsImportModalOpen(false);
+              setIsProcessing(false);
+              if (fileInputRef.current) fileInputRef.current.value = ''; // Reset file input
+            }
+          };
+          reader.onerror = () => {
+            setToastType('error');
+            setToastMsg('文件读取失败，请检查文件是否损坏');
             setIsImportModalOpen(false);
             setIsProcessing(false);
           };
-          reader.readAsText(file); // Default is UTF-8
+          reader.readAsArrayBuffer(file);
       }, 500);
     }
   };
 
   const processImport = (content: string) => {
-    // Basic CSV Parsing logic (Comma or Tab)
+    // Basic CSV/TXT Parsing logic (Comma, Tab or semicolon)
     const rows = content.split(/\r?\n/).filter(r => r.trim() !== '');
     if (rows.length < 2) {
         setToastType('error');
-        setToastMsg('文件内容过少，请确保包含标题行和数据行');
+        setToastMsg('导入解析失败：文件内容过少，请确保包含标题行和至少一行数据行');
         return;
     }
 
-    const header = rows[0].split(/[,\t]+/).map(h => h.trim().replace(/^"|"$/g, ''));
+    const header = parseCSVRow(rows[0]);
     
     // Detect Columns (Strict match to user request, plus common fallbacks)
     const idx = {
@@ -458,7 +508,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
 
     if (idx.name === -1) {
         setToastType('error');
-        setToastMsg('解析失败：未找到“姓名”列。请下载模板并使用 UTF-8 编码格式。');
+        setToastMsg('导入解析失败：未在文件中找到“姓名”列。请确保第一行为标题行，且包含“姓名”字段，或下载标准 CSV 模板参考。');
         return;
     }
 
@@ -475,7 +525,7 @@ const StaffRegistration: React.FC<StaffRegistrationProps> = ({
     const newRecords: RegistrationRecord[] = [];
     
     for(let i=1; i<rows.length; i++) {
-        const cols = rows[i].split(/[,\t]+/).map(c => c.trim().replace(/^"|"$/g, ''));
+        const cols = parseCSVRow(rows[i]);
         if (cols.length < 2) continue;
 
         const name = idx.name !== -1 ? cols[idx.name] : '';
